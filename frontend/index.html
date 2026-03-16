@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="{logoImage.image}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preload" href="/hero.webp" as="image" />
+    <link rel="preload" as="image" href="/images/hero.webp" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <meta
+      name="description"
+      content="Shop millions of products across all categories — Men, Women, Kids, Electronics, and more. Enjoy fast delivery, great deals, and a seamless shopping experience."
+    />
+    <meta
+      name="description"
+      content="Explore the latest trends in Men’s fashion, footwear, and accessories. Find top brands, exclusive deals, and shop online effortlessly."
+    />
+    <meta
+      name="description"
+      content="Discover stylish Women’s clothing, shoes, and accessories. Get amazing offers, top brands, and shop online with ease."
+    />
+    <meta
+      name="description"
+      content="Shop fun and comfortable clothing, toys, and accessories for kids of all ages. Enjoy great deals and fast delivery for your little ones."
+    />
+    <meta
+      name="description"
+      content="Find the latest Electronics including smartphones, laptops, home appliances, and gadgets. Best prices, fast shipping, and top brands available."
+    />
+    <meta
+      name="description"
+      content="Join our marketplace as a seller and start selling your products to millions. Manage orders, inventory, and analytics easily with our Seller Dashboard."
+    />
+    <meta
+      name="description"
+      content="Sign in or create your account to enjoy personalized shopping, order tracking, wishlists, and secure checkout on our platform."
+    />
+    <meta
+      name="description"
+      content="Browse our wide selection of all categories. High-quality products, top brands, great deals, and fast delivery. Shop online today!"
+    />
+
+    <!-- OG tags -->
+    <!-- Facebook / OG -->
+    <meta
+      property="og:title"
+      content="Shop Men, Women, Kids, Electronics & More - MyShop"
+    />
+    <meta
+      property="og:description"
+      content="Millions of products across all categories. Fast delivery, great deals, seamless shopping experience."
+    />
+    <meta
+      property="og:image"
+      content="https://images.unsplash.com/photo-1544441893-675973e31985?w=1200&auto=format&fit=crop&q=80"
+    />
+    <meta property="og:url" content="http://localhost:5173/" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Shop All Products Online - MyShop" />
+    <meta
+      name="twitter:description"
+      content="Find fashion, electronics, and more. Fast shipping, amazing deals, shop now!"
+    />
+    <meta
+      name="twitter:image"
+      content="https://yourdomain.com/images/twitter-image.webp"
+    />
+
+    <!-- <link
+      rel="preload"
+      as="font"
+      href="/fonts/main.eot"
+      type="font/eot"
+      crossorigin
+    /> -->
+    <link
+      rel="preload"
+      href="./index.css"
+      as="style"
+      onload="this.rel = 'stylesheet'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <style>
+      /* critical CSS here */
+    </style>
+    <script type="module" src="/src/main.jsx"></script>
+    <!-- Load the logo script first -->
+    <script type="module">
+      let dots = 0;
+
+      const interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        document.title = "Loading" + ".".repeat(dots);
+      }, 500);
+
+      import { logo, logoImage } from "/src/customer/json/common.js";
+
+      // small delay to simulate loading
+      setTimeout(() => {
+        clearInterval(interval);
+
+        if (logo?.name) {
+          document.title = logo.name;
+        }
+
+        if (logoImage?.image) {
+          const favicon = document.querySelector('link[rel="icon"]');
+          if (favicon) {
+            favicon.href = logoImage.image;
+          }
+        }
+      }, 1500);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+function fetchLocation() {
+    const pincode = document.getElementById("pincode").value;
+
+    if (pincode.length !== 6) {
+        alert("Please enter a valid 6-digit pincode");
+        return;
+    }
+
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data[0].Status === "Success") {
+                const postOffice = data[0].PostOffice[0];
+
+                document.getElementById("city").value = postOffice.District;
+                document.getElementById("state").value = postOffice.State;
+            } else {
+                alert("Invalid pincode");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Something went wrong");
+        });
+}
+
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello, World!</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+     <input type="text" id="pincode" placeholder="Enter Pincode" onblur="fetchLocation()" />
+
+<input type="text" id="city" placeholder="City" readonly />
+<input type="text" id="state" placeholder="State" readonly />
+
+      <script src="script.js"></script>
+  </body>
+</html>

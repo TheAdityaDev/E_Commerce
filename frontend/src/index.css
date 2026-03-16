@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'outfit';
+  src: url(./assets/fonts/Outfit-Light.ttf) format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+
+.scrollable-container {
+  overflow-y: scroll; /* Ensures scrolling is enabled */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer and Edge */
+}
+
+/* For WebKit browsers (Chrome, Safari, Opera) */
+.scrollable-container::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  scroll-behavior: smooth;
+  scroll-snap-type: mandatory;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Standard property for newer Firefox versions */
+}
+
+.logo {
+  width: 120px;
+  font-family: cursive;
+  font-weight: bold;
+  font-size: 24px;
+  color: teal;
+  text-wrap-mode: nowrap;
+}
+
+
+p{
+  font-family: 'outfit';
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  }
+
+::-webkit-scrollbar{
+  display: none;
+}
+
+
+/* Example: Force full width on all screen sizes if needed */
+.Toastify__toast-container {
+  width: 100vw; /* Adjust as needed */
+}
+
+/* Target specific screen sizes using media queries */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    width: 70vw; /* Adjust for better mobile padding */
+    float: right;
+    right: 5;
+    padding-top: 5px;
+    left: auto;
+    margin: 5px;
+  }
+}
