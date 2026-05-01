@@ -4,16 +4,18 @@ class UserController {
   async getProfileByJwt(req, res) {
     try {
       const user = req.user;
-  
+
       if (!user) {
         throw new Error("User not found.");
       }
-  
+
       const { password, ...safeUser } = user._doc || user;
-  
-      return res.status(200).json(safeUser);
+
+      const address = await userService.getUserAddress(safeUser._id);
+
+      return res.status(200).json({ user: safeUser, address });
     } catch (error) {
-      res
+      return res
         .status(error instanceof Error ? 400 : 500)
         .json({ message: error.message });
     }
@@ -30,21 +32,38 @@ class UserController {
 
       return res.status(200).json(user);
     } catch (error) {
-      res
+      return res
         .status(error instanceof Error ? 400 : 500)
         .json({ message: error.message });
     }
   }
 
-   handleError = (error) => {
-    try{
-    return res.status(error instanceof Error ? 400 : 500).json({ message: error.message });
-   } catch (error) {
-    res
-      .status(error instanceof Error ? 400 : 500)
-      .json({ message: "Internal server error" });
+  async updateUserDetails(req,res){
+    try {
+      const { userId } = req.params;
+      const updateData = req.body;
+
+      const updatedUser = await userService.updateUserDetails(userId, updateData);
+
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      return res
+        .status(error instanceof Error ? 400 : 500)
+        .json({ message: error.message });
+    }
   }
-}
+
+  handleError = (error) => {
+    try {
+      return res
+        .status(error instanceof Error ? 400 : 500)
+        .json({ message: error.message });
+    } catch (error) {
+      res
+        .status(error instanceof Error ? 400 : 500)
+        .json({ message: "Internal server error" });
+    }
+  };
 }
 
-module.exports = new UserController()
+module.exports = new UserController();

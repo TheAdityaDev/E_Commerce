@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { ListItemIcon, ListItemText } from "@mui/material";
 import {
   Category,
@@ -9,10 +9,14 @@ import {
   Inventory,
   LocalOffer,
   Logout,
-  Receipt,
-  ShoppingBag,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
+import {
+  performedLogout,
+} from "../../Redux Toolkit/Features/Auth/AuthSlice";
+import { fetchUserProfile } from "../../Redux Toolkit/Features/Customer/userSlice";
+import secureLocalStorage from "react-secure-storage";
 
 const menu = [
   {
@@ -54,7 +58,7 @@ const menu = [
   },
   {
     name: "Deals",
-    path: "/admin/deal",
+    path: "/admin/deals",
     icon: <LocalOffer className="text-teal-700" />,
     activeIcon: <LocalOffer className="text-white" />,
   },
@@ -70,15 +74,26 @@ const menu2 = [
 ];
 
 const AdminDrawerList = ({ toggleDrawer }) => {
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((store) => store?.user?.user);
+
+  const token = secureLocalStorage.getItem("token");
+
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch, token]);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handelLogout = () => {
-    console.log("handel logout");
+  const handelLogout = async () => {
+    await dispatch(performedLogout());
+    navigate("/");
   };
   const handelClick = (item) => {
     if (item.name === "Logout") {
-      // localStorage.clear();
       handelLogout();
     }
 
@@ -88,6 +103,7 @@ const AdminDrawerList = ({ toggleDrawer }) => {
   return (
     <div className="h-full">
       <div className="flex flex-col justify-between h-full w-75 border-r border-gray-400 py-5">
+        <h1 className="m-3 text-2xl">👋 {user?.name || "Admin"}</h1>
         <div className="space-y-2">
           {menu.map((item) => (
             <div

@@ -7,5 +7,6 @@ const userMiddleware = require('../middleware/userAuth.middleware');
 
 
 router.get('/profile',rateLimitRoute,userMiddleware,abortSignal(3000),userController.getProfileByJwt)
-
+router.patch('/update/profile/:userId',rateLimitRoute,userMiddleware,abortSignal(3000),userController.updateUserDetails)
+// updateUserDetails
 module.exports = router

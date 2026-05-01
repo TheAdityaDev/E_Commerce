@@ -27,8 +27,8 @@ class cartService {
     let totalItem = cart.cartItems.length;
 
     cart.cartItems.forEach((cartItem) => {
-      totalMrpPrice += cartItem.mrpPrice;
-      totalSellingPrice += cartItem.sellingPrice;
+      totalMrpPrice += cartItem.mrpPrice * cartItem.quantity;
+      totalSellingPrice += cartItem.sellingPrice * cartItem.quantity;
     });
 
     cart.totalMrpPrice = totalMrpPrice;
@@ -36,7 +36,7 @@ class cartService {
     cart.totalItem = totalItem;
     cart.discount = calculateProductDiscountPercentage(
       totalMrpPrice,
-      totalSellingPrice
+      totalSellingPrice,
     );
 
     let cartItems = await cartItemModel.find({ cart: cart._id }).populate({
@@ -74,8 +74,8 @@ class cartService {
         cart: cart._id,
         quantity,
         size,
-        sellingPrice: quantity * product.sellingPrice,
-        mrpPrice: quantity * product.mrpPrice,
+        sellingPrice: product.sellingPrice,
+        mrpPrice: product.mrpPrice,
         userId: user._id,
       });
 
@@ -84,9 +84,45 @@ class cartService {
 
       return cartItem;
     } else {
-      return isPresent; // Return the existing cart item if found
+      // Update quantity for existing item
+      isPresent.quantity += quantity;
+      isPresent.sellingPrice = product.sellingPrice;
+      isPresent.mrpPrice = product.mrpPrice;
+      await isPresent.save();
+      return isPresent;
     }
   }
+
+ async updateCartItem(userId, cartItemId, cartItemData) {
+  const cartItem = await cartItemModel
+  .findById(cartItemId)
+  .populate("product");
+
+// ✅ FIRST check
+if (!cartItem) {
+  throw new Error("Cart item not found");
+}
+
+// ✅ SECOND check
+if (!cartItem.product) {
+  throw new Error("Product not found");
+}
+
+  const updates = {
+    quantity: cartItemData.quantity,
+    mrpPrice: cartItem.product.mrpPrice,
+    sellingPrice: cartItem.product.sellingPrice,
+    // size: cartItemData.size, //optional
+  };
+
+  // ✅ correct update
+  await cartItemModel.updateOne(
+    { _id: cartItemId },
+    { $set: updates }
+  );
+
+  return { ...cartItem.toObject(), ...updates };
+}
 }
 
 module.exports = new cartService();

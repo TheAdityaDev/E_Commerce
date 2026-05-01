@@ -1,20 +1,38 @@
-import React, { useState } from "react";
-import ElectronicCategory from "./ElectronicCategory/electronicCategory";
-import Gird from "./Gird/Gird";
-import Deal from "./Deal/Deal";
-import HomeCategory from "./HomeCategory/HomeCategory";
+import { useEffect, lazy, Suspense } from "react";
+
+const Gird = lazy(() => import("./Gird/Gird"));
+const Deal = lazy(() => import("./Deal/Deal"));
+
+const ElectronicCategory = lazy(
+  () => import("./ElectronicCategory/electronicCategory"),
+);
+const HomeCategory = lazy(() => import("./HomeCategory/HomeCategory"));
+
+const BottomBar = lazy(() => import("../../Navbar/BottomBar"));
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import BottomBar from "../../Navbar/BottomBar";
-import { ArrowLeft, ArrowRight } from "@mui/icons-material";
+import { useDispatch } from "react-redux";
+import { fetchHomePageData } from "../../../Redux Toolkit/Features/Customer/HomeCategorySlice";
+import { Skeleton } from "@mui/material";
 
 const Home = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchHomePageData());
+  }, [dispatch]);
 
   return (
     <div className="space-y-16 relative">
       {/* Electronic Category */}
-      <ElectronicCategory />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center p-4">Loading...</div>
+        }
+      >
+        <ElectronicCategory />
+      </Suspense>
 
       {/* Grid Section */}
       <section className="px-4 sm:px-6 lg:px-20">
@@ -31,9 +49,6 @@ const Home = () => {
 
       {/* Shop By Category */}
       <section className="px-4 sm:px-6 lg:px-20">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">
-          Shop By Category
-        </h1>
         <HomeCategory />
       </section>
 
@@ -86,7 +101,11 @@ const Home = () => {
         </div>
       </section>
 
-      <BottomBar />
+      <Suspense
+        fallback={<Skeleton variant="rectangular" width={210} height={60} />}
+      >
+        <BottomBar />
+      </Suspense>
     </div>
   );
 };

@@ -13,16 +13,12 @@ const cartItemSchema = new mongoose.Schema({
     },
     quantity:{
         type:Number,
-        required:true
+        required:true,
+        default:1
     },
     size:{
         type:String,
         required:true
-    },
-    quantity:{
-        type:Number,
-        required:true,
-        default:1
     },
     mrpPrice:{
         type:Number,

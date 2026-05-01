@@ -1,72 +1,37 @@
-import { Box, Grid, TextField } from "@mui/material";
+import { Box, Grid, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import React from "react";
+import { useState } from "react";
 
 const SellerStep2 = ({ formik }) => {
+  const [localities, setLocalities] = useState([]);
   // fetch seller location
-  const fetchLocation = async (pincode) => {
-    if (pincode.length !== 6) return;
+ const fetchPincodeDetails = async (pincode) => {
+  try {
+    const res = await fetch(
+      `https://api.postalpincode.in/pincode/${pincode}`
+    );
+    const data = await res.json();
 
-    try {
-      const res = await fetch(
-        `https://api.postalpincode.in/pincode/${pincode}`,
-      );
-      const data = await res.json();
+    if (data[0].Status === "Success") {
+      const offices = data[0].PostOffice;
 
-      if (data[0].Status === "Success") {
-        const postOffice = data[0].PostOffice[0];
+      setLocalities(offices); // store all options
 
-        formik.setFieldValue("pickupAddress.locality", postOffice.Name);
-        formik.setFieldValue("pickupAddress.city", postOffice.District);
-        formik.setFieldValue("pickupAddress.state", postOffice.State);
-      }
-    } catch (error) {
-      console.error("Pincode fetch error:", error);
+      // optional: set default
+      const first = offices[0];
+      formik.setFieldValue("pickupDetails.city", first.District);
+      formik.setFieldValue("pickupDetails.state", first.State);
+      formik.setFieldValue("pickupDetails.country", first.Country);
     }
-  };
+  } catch (err) {
+    console.log(err||"Error fetching pincode");
+  }
+};
   return (
     <Box>
       <div className="p-5 space-y-5 md:p-5 lg:p-5">
         <Grid className="space-y-5" spacing={3}>
-          <Grid>
-            <TextField
-              fullWidth
-              type="text"
-              inputMode="text"
-              label="Name"
-              enterKeyHint="send"
-              name="pickupAddress.name"
-              value={formik.values.pickupAddress.name}
-              onChange={formik.handleChange}
-              error={
-                formik.touched.pickupAddress?.name &&
-                Boolean(formik.errors.pickupAddress?.name)
-              }
-              helperText={
-                formik.touched.pickupAddress?.name &&
-                formik.errors.pickupAddress?.name
-              }
-              required
-            />
-          </Grid>
           <Grid className="flex gap-4 items-center">
-            <TextField
-              fullWidth
-              type="tel"
-              label="Alternative Mobile"
-              inputMode="tel"
-              InputProps={{ inputProps: { maxLength: 10 } }}
-              name="pickupAddress.mobile"
-              value={formik.values.pickupAddress.mobile}
-              onChange={formik.handleChange}
-              error={
-                formik.touched.pickupAddress?.mobile &&
-                Boolean(formik.errors.pickupAddress?.mobile)
-              }
-              helperText={
-                formik.touched.pickupAddress?.mobile &&
-                formik.errors.pickupAddress?.mobile
-              }
-            />
             <TextField
               fullWidth
               type="number"
@@ -75,68 +40,46 @@ const SellerStep2 = ({ formik }) => {
               // inputProps={{ maxLength:4}}
               InputProps={{ inputProps: { maxLength: 6 } }}
               enterKeyHint="next"
-              name="pickupAddress.pincode"
-              value={formik.values.pickupAddress.pincode}
+              name="pickupDetails.pincode"
+              value={formik.values.pickupDetails.pincode}
               onChange={(e) => {
                 const value = e.target.value;
 
                 // update formik value
-                formik.setFieldValue("pickupAddress.pincode", value);
+                formik.setFieldValue("pickupDetails.pincode", value);
 
                 // detect 6 digit pincode
                 const match = value.match(/^\d{6}$/);
 
                 if (match) {
-                  fetchLocation(match[0]);
+                  fetchPincodeDetails(match[0]);
                 }
               }}
               error={
-                formik.touched.pickupAddress?.pincode &&
-                Boolean(formik.errors.pickupAddress?.pincode)
+                formik.touched.pickupDetails?.pincode &&
+                Boolean(formik.errors.pickupDetails?.pincode)
               }
               helperText={
-                formik.touched.pickupAddress?.pincode &&
-                formik.errors.pickupAddress?.pincode
+                formik.touched.pickupDetails?.pincode &&
+                formik.errors.pickupDetails?.pincode
               }
               required
             />
-          </Grid>
-          <Grid>
             <TextField
               fullWidth
-              id="pickupAddress"
+              id="country"
               type="text"
-              label="Pickup Address"
-              name="pickupAddress.address"
-              value={formik.values.pickupAddress.address}
+              label="Country"
+              name="pickupDetails.country"
+              value={formik.values.pickupDetails.country}
               onChange={formik.handleChange}
               error={
-                formik.touched.pickupAddress?.address &&
-                Boolean(formik.errors.pickupAddress?.address)
+                formik.touched.pickupDetails?.country &&
+                Boolean(formik.errors.pickupDetails?.country)
               }
               helperText={
-                formik.touched.pickupAddress?.address &&
-                formik.errors.pickupAddress?.address
-              }
-              required
-            />
-          </Grid>
-          <Grid>
-            <TextField
-              fullWidth
-              inputMode="text"
-              type="text"
-              label="Locality"
-              name="pickupAddress.locality"
-              value={formik.values.pickupAddress.locality}
-              onChange={formik.handleChange}
-              error={
-                formik.touched.pickupAddress?.locality &&
-                Boolean(formik.errors.pickupAddress?.locality)
-              }
-              helperText={
-                formik.touched.pickupAddress?.locality &&
-                formik.errors.pickupAddress?.locality
+                formik.touched.pickupDetails?.country &&
+                formik.errors.pickupDetails?.country
               }
               required
             />
@@ -145,36 +88,83 @@ const SellerStep2 = ({ formik }) => {
             <TextField
               fullWidth
               type="text"
-              label="City"
+              label="Address"
               inputMode="text"
-              name="pickupAddress.city"
-              value={formik.values.pickupAddress.city}
+              InputProps={{ inputProps: { maxLength: 30 } }}
+              name="pickupDetails.address"
+              value={formik.values.pickupDetails.address}
               onChange={formik.handleChange}
               error={
-                formik.touched.pickupAddress?.city &&
-                Boolean(formik.errors.pickupAddress?.city)
+                formik.touched.pickupDetails?.address &&
+                Boolean(formik.errors.pickupDetails?.address)
               }
               helperText={
-                formik.touched.pickupAddress?.city &&
-                formik.errors.pickupAddress?.city
+                formik.touched.pickupDetails?.address &&
+                formik.errors.pickupDetails?.address
+              }
+              required
+            />
+          </Grid>
+
+          <Grid>
+            <InputLabel>Locality</InputLabel>
+            <Select
+            fullWidth
+              name="pickupDetails.locality"
+              value={formik.values.pickupDetails.locality || ""}
+              onChange={(e) => {
+                const selected = localities.find(
+                  (loc) => loc.Name === e.target.value,
+                );
+
+                formik.setFieldValue("pickupDetails.locality", selected.Name);
+                formik.setFieldValue("pickupDetails.city", selected.District);
+                formik.setFieldValue("pickupDetails.state", selected.State);
+                formik.setFieldValue("pickupDetails.country", selected.Country);
+              }}
+              required
+            >
+              {localities.map((loc, index) => (
+                <MenuItem key={index} value={loc.Name}>
+                  {loc.Name}
+                </MenuItem>
+              ))}
+            </Select>
+          </Grid>
+          <Grid className="flex gap-4 items-center">
+            <TextField
+              fullWidth
+              type="text"
+              label="City"
+              inputMode="text"
+              name="pickupDetails.city"
+              value={formik.values.pickupDetails.city}
+              onChange={formik.handleChange}
+              error={
+                formik.touched.pickupDetails?.city &&
+                Boolean(formik.errors.pickupDetails?.city)
+              }
+              helperText={
+                formik.touched.pickupDetails?.city &&
+                formik.errors.pickupDetails?.city
               }
               required
             />
             <TextField
               fullWidth
-              id="pickupAddress"
+              id="pickupDetails"
               type="text"
               label="State"
-              name="pickupAddress.state"
-              value={formik.values.pickupAddress.state}
+              name="pickupDetails.state"
+              value={formik.values.pickupDetails.state}
               onChange={formik.handleChange}
               error={
-                formik.touched.pickupAddress?.state &&
-                Boolean(formik.errors.pickupAddress?.state)
+                formik.touched.pickupDetails?.state &&
+                Boolean(formik.errors.pickupDetails?.state)
               }
               helperText={
-                formik.touched.pickupAddress?.state &&
-                formik.errors.pickupAddress?.state
+                formik.touched.pickupDetails?.state &&
+                formik.errors.pickupDetails?.state
               }
               required
             />

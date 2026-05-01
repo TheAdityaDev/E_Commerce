@@ -9,6 +9,8 @@ import Paper from "@mui/material/Paper";
 import IconButton from "@mui/material/IconButton";
 import { Edit } from "@mui/icons-material";
 import Button from "@mui/material/Button";
+import { useAppSelector } from "../../Redux Toolkit/store";
+import ProductImagesWithPopup from "./ProductImagesWithPopup";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -30,51 +32,49 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData("Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData("Eclair", 262, 16.0, 24, 6.0),
-  createData("Cupcake", 305, 3.7, 67, 4.3),
-  createData("Gingerbread", 356, 16.0, 49, 3.9),
-];
-
 const ProductTable = () => {
+  const sellerProduct = useAppSelector((store) => store.sellerProduct || {});
+  const productArray = Array.isArray(sellerProduct?.products)
+    ? sellerProduct.products
+    : sellerProduct?.products
+      ? Object.values(sellerProduct.products)
+      : [];
+
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 700 }} aria-label="customized table">
         <TableHead>
           <TableRow>
-            <StyledTableCell>Images</StyledTableCell>
-            <StyledTableCell align="right">Title</StyledTableCell>
-            <StyledTableCell align="right">Price</StyledTableCell>
-            <StyledTableCell align="right">Selling Price</StyledTableCell>
-            <StyledTableCell align="right">Update Stock</StyledTableCell>
-            <StyledTableCell align="right">Update</StyledTableCell>
+            <StyledTableCell align="center">Images</StyledTableCell>
+            <StyledTableCell align="center">Title</StyledTableCell>
+            <StyledTableCell align="center">Price</StyledTableCell>
+            <StyledTableCell align="center">Selling Price</StyledTableCell>
+            <StyledTableCell align="center">Update Stock</StyledTableCell>
+            <StyledTableCell align="center">Update</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <StyledTableRow key={row.name}>
+          {productArray.map((item) => (
+            <StyledTableRow key={item.id}>
               <StyledTableCell component="th" scope="row">
-                <div className="flex items-center gap-3">
-                    {[1,1,1,1].map((item,i)=>(
-                        <img loading="lazy" className="h-20 w-20 object-cover rounded-md" key={i} src="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSE87yh8fXjYZo7eS7Bt2QfO51ukrWAUPPSbM_ETDMVYPCK9Z_Z5BHQXfnGWkGm7IgN3vemQtquDiq3Oy4fVDSUZnzhGotuTeYqItI2c2gbpCYmZTZ6VTTWUA" alt="" />
-                    ))}
-                </div>
+                <StyledTableCell component="th" scope="row">
+                  <ProductImagesWithPopup
+                    images={item.images}
+                    title={item.title}
+                  />
+                </StyledTableCell>
               </StyledTableCell>
-              <StyledTableCell align="right">{row.calories}</StyledTableCell>
-              <StyledTableCell align="right">{row.fat}</StyledTableCell>
-              <StyledTableCell align="right">{row.carbs}</StyledTableCell>
-              <StyledTableCell align="right">
+              <StyledTableCell align="center">{item.title}</StyledTableCell>
+              <StyledTableCell align="center">₹{item.mrpPrice}</StyledTableCell>
+              <StyledTableCell align="center">
+                ₹{item.sellingPrice}
+              </StyledTableCell>
+              <StyledTableCell align="center">
                 <Button variant="outlined" size="small">
-                    In_Stock
+                  In_Stock
                 </Button>
               </StyledTableCell>
-              <StyledTableCell align="right">
+              <StyledTableCell align="center">
                 <IconButton color="primary">
                   <Edit />
                 </IconButton>

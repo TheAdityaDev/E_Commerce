@@ -4,7 +4,7 @@ function rateLimitRoute(req, res, next) {
   const ip = req.ip;
   const now = Date.now();
 
-  const LIMIT = 3;
+  const LIMIT = 10;
   const WINDOW = 6 * 1000;
 
   if (!requests.has(ip)) {

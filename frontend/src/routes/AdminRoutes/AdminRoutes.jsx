@@ -1,29 +1,31 @@
-import React from 'react'
-import { Route, Routes } from 'react-router-dom'
-import AdminDashboard from '../../admin/Dashboard/AdminDashboard'
-import Coupon from '../../admin/Coupon/Coupon'
-import SellerTable from '../../admin/Seller/SellerTable'
-import CouponForm from '../../admin/Coupon/CouponForm'
-import GridTable from '../../admin/Home/GridTable'
-import ElectronicTable from '../../admin/Home/ElectronicTable'
-import Deal from '../../admin/Deal/Deal'
-import ShopByCategory from '../../admin/Home/ShopByCategory'
-import Products from '../../seller/Products/Products'
+import React, { Suspense, lazy } from "react";
+import { Route, Routes } from "react-router-dom";
+
+// Lazy imports
+const SellerTable = lazy(() => import("../../admin/Seller/SellerTable"));
+const Coupon = lazy(() => import("../../admin/Coupon/Coupon"));
+const CouponForm = lazy(() => import("../../admin/Coupon/CouponForm"));
+const Products = lazy(() => import("../../seller/Products/Products"));
+const GridTable = lazy(() => import("../../admin/Home/GridTable"));
+const ElectronicTable = lazy(() => import("../../admin/Home/ElectronicTable"));
+const ShopByCategory = lazy(() => import("../../admin/Home/ShopByCategory"));
+const Deal = lazy(() => import("../../admin/Deal/Deal"));
 
 const AdminRoutes = () => {
-
   return (
-    <Routes>
-        <Route path='/' element={<SellerTable />} />
-        <Route path='/coupon' element={<Coupon />} />
-        <Route path='/add-coupon' element={<CouponForm />} />
-        <Route path='/products' element={<Products />} />
-        <Route path='/home-grid' element={<GridTable />} />
-        <Route path='/electronic-category' element={<ElectronicTable />} />
-        <Route path='/shop-by-category' element={<ShopByCategory />} />
-        <Route path='/deal' element={<Deal />} />
-    </Routes>
-  )
-}
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        <Route path="/" element={<SellerTable />} />
+        <Route path="/coupon" element={<Coupon />} />
+        <Route path="/add-coupon" element={<CouponForm />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/home-grid" element={<GridTable />} />
+        <Route path="/electronic-category" element={<ElectronicTable />} />
+        <Route path="/shop-by-category" element={<ShopByCategory />} />
+        <Route path="/deals" element={<Deal />} />
+      </Routes>
+    </Suspense>
+  );
+};
 
-export default AdminRoutes
+export default AdminRoutes;

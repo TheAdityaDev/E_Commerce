@@ -7,19 +7,26 @@ class dealController {
       const deals = await dealService.getDeals(deal);
       res.status(200).json(deals);
     } catch (error) {
-      throw new Error(error.message);
+      console.error("Error fetching deals:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch deals" });
     }
   }
 
-  async createDeal(req, res) {
-    try {
-      const deal = req.body;
-      const createDeal = await dealService.createDeal(deal);
-      res.status(202).json(createDeal);
-    } catch (error) {
-      throw new Error(error.message);
+ async createDeal(req, res) {
+  try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Body missing" });
     }
+
+    const deal = req.body;
+
+    const createdDeal = await dealService.createDeal(deal);
+
+    res.status(201).json(createdDeal);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
+}
 
   async updateDeal(req, res) {
     try {
@@ -28,7 +35,8 @@ class dealController {
       const updateDeal = await dealService.updateDeal(deal, id);
       res.status(202).json(updateDeal);
     } catch (error) {
-      throw new Error(error.message);
+      console.error("Error updating deal:", error);
+      res.status(500).json({ message: error.message || "Failed to update deal" });
     }
   }
 
@@ -38,10 +46,10 @@ class dealController {
       const deleteDeal = await dealService.deleteDeal(id);
       res.status(202).json(deleteDeal);
     } catch (error) {
-      throw new Error(error.message);
+      console.error("Error deleting deal:", error);
+      res.status(500).json({ message: error.message || "Failed to delete deal" });
     }
   }
 }
-
 
 module.exports = new dealController();

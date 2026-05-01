@@ -3,6 +3,7 @@ const rateLimitRoute = require("../api/apilimit.api");
 const router = express.Router();
 const abortSignal = require("../api/abort.api");
 const sellerController = require("../controller/seller.controller");
+const userMiddleware = require("../middleware/userAuth.middleware");
 
 
 /**
@@ -16,6 +17,7 @@ const sellerController = require("../controller/seller.controller");
 router.patch(
   "/seller/:id/status/:status",
   rateLimitRoute,
+  userMiddleware,
   abortSignal(3000),
   sellerController.updateSellerAccountStatus
 );

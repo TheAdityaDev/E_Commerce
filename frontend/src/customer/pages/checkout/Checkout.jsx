@@ -1,14 +1,17 @@
-import Button from "@mui/material/Button";
+﻿import Button from "@mui/material/Button";
 import AddressCard from "./AddressCard";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Modal from "@mui/material/Modal";
-import { Box } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import AddressForm from "./AddressForm";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import PricingCard from "../Cart/PricingCard";
+import { useAppDispatch, useAppSelector } from "../../../Redux Toolkit/store";
+import secureLocalStorage from "react-secure-storage";
+import { createOrder } from "../../../Redux Toolkit/Features/Customer/orderSlice";
+import { openRazorpayPayment } from "../../../util/razorpayHelper";
 
 const style = {
   position: "absolute",
@@ -20,34 +23,107 @@ const style = {
   p: 4,
 };
 
-const paymentGatewayList = [
-  {
-    name: "razorpay",
-    image:
-      "https://w7.pngwing.com/pngs/93/992/png-transparent-razorpay-logo-tech-companies-thumbnail.png",
-  },
-  {
-    name: "Stripe",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRc_b7cYDTEaXxYsRDAdsVXYknigIr16CNbZQ&s",
-  },
-];
-
 const Checkout = () => {
+  const dispatch = useAppDispatch();
   const [selectedAddress, setSelectedAddress] = useState(2);
   const [open, setOpen] = useState(false);
-  const [paymentGateway, setPaymentGateway] = useState(
-    paymentGatewayList[0].name,
-  );
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const handelChange = (e) => {
     setSelectedAddress(e.target.value);
-    console.log(e.target.value);
   };
 
-  const handlePaymentGatewayChange = (e) => {
-    setPaymentGateway(e.target.value);
+  const { user } = useAppSelector((state) => state.user);
+  const couponState = useAppSelector((store) => store.coupon);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [orderCreated, setOrderCreated] = useState(false);
+  const [currentPaymentOrderId, setCurrentPaymentOrderId] = useState(null);
+  const [currentAmount, setCurrentAmount] = useState(null);
+
+  const navigate = useNavigate();
+
+  const createOrders = async () => {
+    const token = secureLocalStorage.getItem("token");
+    setIsCreating(true);
+    try {
+      console.log("Step 1: Creating order...");
+      const payload = await dispatch(
+        createOrder({
+          token,
+          paymentGateway: "razorpay",
+          address: selectedAddress,
+          discount: couponState.coupon?.discount,
+          couponCode: couponState.appliedCode,
+        }),
+      ).unwrap();
+
+      if (payload?.paymentOrderId) {
+        console.log("Order created successfully!");
+        setCurrentPaymentOrderId(payload.paymentOrderId);
+        setCurrentAmount(payload.amount);
+
+        setOrderCreated(true);
+        toast.success("Order created! Ready for payment.");
+      } else {
+        toast.error("Failed to create order");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.message || "Failed to create order");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+
+  const handleRazorpayPayment = async () => {
+    const token = secureLocalStorage.getItem("token");
+
+    if (!currentPaymentOrderId || !currentAmount) {
+      toast.error("Payment information missing. Please create order again.");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      await openRazorpayPayment({
+        amount: currentAmount,
+        orderId: currentPaymentOrderId,
+        user: {
+          name: user?.name,
+          email: user?.email,
+          mobile: user?.mobile,
+          
+          dispatch,
+        },
+        token: token,
+
+        onSuccess: async (response) => {
+          console.log("Payment successful:", response);
+          toast.success("Payment successful!");
+
+          // Redirect to success page
+          navigate(
+            `/payment/success/${currentPaymentOrderId}?razorpay_payment_id=${response?.razorpay_payment_id || ""}`,
+          );
+          setOrderCreated(false);
+          setCurrentPaymentOrderId(null);
+          setCurrentAmount(null);
+        },
+
+        onError: (error) => {
+          console.error("Payment failed:", error);
+          toast.error(error?.message || "Payment failed");
+        },
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to initialize Razorpay payment");
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -63,12 +139,13 @@ const Checkout = () => {
           <div className="text-xs font-medium space-y-5">
             <p>Saved Addresses</p>
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5, 6].map((item, index) => (
+              {user?.address?.map((item, index) => (
                 <AddressCard
-                  key={index}
+                  key={index._id || index}
                   value={item}
+                  item={item}
                   selectedValue={selectedAddress}
-                  handelChange={handelChange}
+                  handleChange={handelChange}
                 />
               ))}
             </div>
@@ -84,44 +161,60 @@ const Checkout = () => {
         </div>
         <div className="col-span-1 text-sm space-y-3">
           <section className="space-y-3 border p-5 rounded-md">
-            <h1 className="font-semibold pb-2 text-center text-green-700">
-              Choose Payment Gateway
+            <h1 className="font-semibold pb-2 text-center text-teal-700">
+              Razorpay Checkout
             </h1>
-            <RadioGroup
-              row
-              aria-labelledby="demo-row-radio-buttons-group-label"
-              name="row-radio-buttons-group"
-              value={paymentGateway}
-              onChange={handlePaymentGatewayChange}
-            >
-              {paymentGatewayList.map((item, i) => (
-                <span className="flex justify-between mx-2">
-                  <FormControlLabel
-                    key={i}
-                    value={item.name}
-                    control={<Radio />}
-                  />
-                  <img
-                  loading="lazy"
-                    className="object-contain h-20 w-20"
-                    src={item.image}
-                    alt={item.name}
-                  />
-                </span>
-              ))}
-            </RadioGroup>
+            <p className="text-xs text-gray-600 text-center">
+              Fast & Secure Payment Gateway
+            </p>
           </section>
           <section>
-            <PricingCard />
+            <PricingCard discount={couponState.coupon?.discount} />
             <div className="p-5">
-              <Button
-                fullWidth
-                sx={{ px: "11px" }}
-                variant="contained"
-                size="large"
-              >
-                Place Order
-              </Button>
+              {!orderCreated ? (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  type="submit"
+                  onClick={createOrders}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Place Order"
+                  )}
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="text-center p-3 bg-green-50 rounded border border-green-200">
+                    <p className="text-green-700 font-semibold">
+                      Order Created!
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Proceed to secure payment
+                    </p>
+                  </div>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    onClick={handleRazorpayPayment}
+                    disabled={isProcessingPayment}
+                    sx={{
+                      bgcolor: "#008B8B",
+                      "&:hover": { bgcolor: "#006666" },
+                    }}
+                  >
+                    {isProcessingPayment ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      "Pay with Razorpay"
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -133,7 +226,7 @@ const Checkout = () => {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <AddressForm />
+          <AddressForm paymentGateway="razorpay" />
         </Box>
       </Modal>
     </div>

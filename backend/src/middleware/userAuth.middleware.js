@@ -23,7 +23,7 @@ const userMiddleware = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    res
+    return res
       .status(error instanceof Error ? 400 : 500)
       .json({ message: error.message });
   }

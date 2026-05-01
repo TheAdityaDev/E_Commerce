@@ -1,10 +1,14 @@
 import React from 'react'
 import HomeCategoryTable from './HomeCategoryTable'
-const image = "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=1200"
+import { useAppSelector } from '../../Redux Toolkit/store';
+
 const GridTable = () => {
+   const gridCategories = useAppSelector(
+      (store) => store?.grid,
+    );
   return (
     <div>
-      <HomeCategoryTable image={image} />
+      <HomeCategoryTable categories={gridCategories} />
     </div>
   )
 }

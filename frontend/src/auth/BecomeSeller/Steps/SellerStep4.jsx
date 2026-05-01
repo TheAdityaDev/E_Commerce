@@ -9,7 +9,6 @@ const SellerStep4 = ({ formik }) => {
     setShowPassword((prev) => !prev);
   };
 
-
   return (
     <div className="space-y-5 p-5">
       <div>
@@ -18,6 +17,7 @@ const SellerStep4 = ({ formik }) => {
           type="text"
           label="Business Name"
           inputMode="text"
+          InputProps={{ inputProps: { maxLength: 20 } }}
           name="businessDetails.businessName"
           value={formik.values.businessDetails.businessName}
           onChange={formik.handleChange}
@@ -38,6 +38,7 @@ const SellerStep4 = ({ formik }) => {
           type="email"
           label="Business Email"
           inputMode="email"
+          InputProps={{ inputProps: { maxLength: 20 } }}
           name="businessDetails.businessEmail"
           value={formik.values.businessDetails.businessEmail}
           onChange={formik.handleChange}
@@ -59,16 +60,39 @@ const SellerStep4 = ({ formik }) => {
           type="tel"
           label="Business Phone Number"
           inputMode="tel"
-          name="businessDetails.businessMobile"
-          value={formik.values.businessDetails.businessMobile}
+          InputProps={{ inputProps: { maxLength: 10 } }}
+          name="businessDetails.businessPhone"
+          value={formik.values.businessDetails.businessPhone}
           onChange={formik.handleChange}
           error={
-            formik.touched.businessDetails?.businessMobile &&
-            Boolean(formik.errors.businessDetails?.businessMobile)
+            formik.touched.businessDetails?.businessPhone &&
+            Boolean(formik.errors.businessDetails?.businessPhone)
           }
           helperText={
-            formik.touched.businessDetails?.businessMobile &&
-            formik.errors.businessDetails?.businessMobile
+            formik.touched.businessDetails?.businessPhone &&
+            formik.errors.businessDetails?.businessPhone
+          }
+          required
+        />
+      </div>
+
+      <div>
+        <TextField
+          fullWidth
+          type="text"
+          label="Business Address"
+          inputMode="text"
+          InputProps={{ inputProps: { maxLength: 30 } }}
+          name="businessDetails.businessAddress"
+          value={formik.values.businessDetails.businessAddress}
+          onChange={formik.handleChange}
+          error={
+            formik.touched.businessDetails?.businessAddress &&
+            Boolean(formik.errors.businessDetails)
+          }
+          helperText={
+            formik.touched.businessDetails?.businessAddress &&
+            formik.errors.businessDetails?.businessAddress
           }
           required
         />
@@ -84,18 +108,17 @@ const SellerStep4 = ({ formik }) => {
           value={formik.values.password}
           onChange={formik.handleChange}
           error={
-            formik.touched.password &&
-            Boolean(formik.errors.businessDetails)
+            formik.touched.password && Boolean(formik.errors.businessDetails)
           }
-          helperText={
-            formik.touched.password &&
-            formik.errors.password
-          }
+          helperText={formik.touched.password && formik.errors.password}
           required
         />
-         <button className="absolute right-3 cursor-pointer" onClick={handleTogglePassword}>
-                {showPassword ? <EyeClosedIcon /> : <Eye />}
-            </button>
+        <button
+          className="absolute right-3 cursor-pointer"
+          onClick={handleTogglePassword}
+        >
+          {showPassword ? <EyeClosedIcon /> : <Eye />}
+        </button>
       </div>
     </div>
   );

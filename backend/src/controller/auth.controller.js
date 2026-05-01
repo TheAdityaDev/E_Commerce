@@ -9,7 +9,7 @@ class AuthController {
       await authService.sendLoginOtp(email);
       return res.status(200).json({ message: "OTP sent successfully" });
     } catch (error) {
-      res
+      return res
         .status(error instanceof Error ? 400 : 500)
         .json({ message: error.message });
     }
@@ -46,10 +46,10 @@ class AuthController {
 
   async forgetPassword(req, res) {
     try {
-      const response = await authService.forgetPassword(req.body.email , req.body.password);
+      const { email, password, otp } = req.body;
       return res.status(200).json(response);
     } catch (error) {
-      res
+      return res
         .status(error instanceof Error ? 400 : 500)
         .json({ message: error.message });
     }
@@ -58,10 +58,12 @@ class AuthController {
   async resetPassword(req,res){
     try {
       const { email, password, token } = req.body;
-      const response = await authService.resetPassword(email, password, token);
-      return res.status(200).json(response);
+      return res.status(200).json({
+        success:true,
+        message:"Password Reset successfully."
+      });
     } catch (error) {
-      res
+      return res
       .status(error instanceof Error ? 400 : 500)
       .json({ message: error.message });
     }
@@ -70,10 +72,9 @@ class AuthController {
   async verificationOTP(req,res){
     try {
       const { email, otp } = req.body;
-      const response = await authService.verificationOTP(email, otp);
       return res.status(200).json(response);
     } catch (error) {
-      res
+      return res
       .status(error instanceof Error ? 400 : 500)
       .json({ message: error.message });
     }

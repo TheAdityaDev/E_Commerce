@@ -1,10 +1,53 @@
 import { Box, TextField } from "@mui/material";
 
-const SellerStep1 = ({ formik  }) => {
+const SellerStep1 = ({ formik }) => {
   return (
     <Box>
       <p className="text-xl font-bold text-center pb-9">Contact Details</p>
       <div className="p-5 space-y-5  md:p-5 lg:p-10">
+        <div>
+          <TextField
+            fullWidth
+            id="sellerName"
+            type="text"
+            label="Seller Name"
+            name="sellerName"
+            inputMode="text"
+            pattern="[a-zA-Z\s]+"
+            enterKeyHint="next"
+            InputProps={{ inputProps: { maxLength: 20 } }}
+            required
+            value={formik.values.sellerName}
+            onChange={formik.handleChange}
+            error={
+              formik.touched.sellerName && Boolean(formik.errors.sellerName)
+            }
+            helperText={formik.touched.sellerName && formik.errors.sellerName}
+          />
+        </div>
+
+        <div>
+          <TextField
+            fullWidth
+            type="email"
+            label="Business Email"
+            inputMode="email"
+            InputProps={{ inputProps: { maxLength: 20 } }}
+            name="email"
+            required
+            enterKeyHint="next"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            error={
+              formik.touched.email &&
+              Boolean(formik.errors.businessDetails)
+            }
+            helperText={
+              formik.touched.email &&
+              formik.errors.email
+            }
+          />
+        </div>
         <div>
           <TextField
             fullWidth
@@ -24,22 +67,7 @@ const SellerStep1 = ({ formik  }) => {
             helperText={formik.touched.mobile && formik.errors.mobile}
           />
         </div>
-        <div>
-          <TextField
-            fullWidth
-            id="email"
-            type="text"
-            label="Email"
-            name="email"
-            enterKeyHint="next"
-            InputProps={{ inputProps: { maxLength: 20 } }}
-            required
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            error={formik.touched.email && Boolean(formik.errors.email)}
-            helperText={formik.touched.email && formik.errors.email}
-          />
-        </div>
+
         <div>
           <TextField
             fullWidth

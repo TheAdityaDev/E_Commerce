@@ -10,21 +10,20 @@ class cartItemService {
     if (cartItem.userId.toString() === userId.toString()) {
       const updates = {
         quantity: cartItemData.quantity,
-        mrpPrice: cartItemData.quantity * cartItem.product.mrpPrice,
-        sellingPrice: cartItemData.quantity * cartItem.product.sellingPrice,
+        mrpPrice: cartItem.product.mrpPrice,
+        sellingPrice: cartItem.product.sellingPrice,
         size: cartItemData.size,
       };
 
       await cartItemModel
         .findByIdAndUpdate(cartItemId, updates, {
-          new: true,
+          returnDocument : "after",
         })
         .populate("product");
     } else {
       throw new Error("Unauthorized Access");
     }
-    await cartItemModel.findByIdAndDelete(cartItemId);
-    return "Card delete successfully";
+    return "Cart item updated successfully";
   }
 
   async findCartById(cartId) {
@@ -38,17 +37,7 @@ class cartItemService {
   }
 
   async removeCartItem(userId, cartItemId) {
-    console.log("userId ===>", userId);
-
     const cartItem = await cartItemModel.findById(cartItemId);
-
-    const logs = {
-      userId,
-      cartItemId,
-      cart,
-    };
-
-    console.table(logs);
 
     if (!cartItem) {
       throw new Error("Cart not found");
@@ -62,7 +51,7 @@ class cartItemService {
     }
 
     console.log(
-      cartItem.userId.toString() !== userId.toString() && cartItemId.toString()
+      cartItem.userId.toString() !== userId.toString() && cartItemId.toString(),
     );
 
     await cartItem.deleteOne({ _id: cartItem._id });

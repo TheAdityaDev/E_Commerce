@@ -6,15 +6,9 @@ const productController = require("../controller/product.controller");
 const userMiddleware = require("../middleware/userAuth.middleware");
 
 
-
-/* router.post('/create',rateLimitRoute,abortSignal(3000),productController.createProduct)
-router.get('/seller',rateLimitRoute,abortSignal(3000),productController.getProductBySeller)
-router.delete('/:productId',rateLimitRoute,abortSignal(3000),productController.deleteProduct)
- */
 /* search for product by query  */
 router.get(
   "/search",
-  userMiddleware,
   rateLimitRoute,
   abortSignal(3000),
   productController.searchProduct
@@ -23,7 +17,6 @@ router.get(
 /* Get all product with filters */
 router.get(
   "/",
-  userMiddleware,
   rateLimitRoute,
   abortSignal(3000),
   productController.getAllProducts
@@ -32,11 +25,19 @@ router.get(
 /* Get product with id */
 router.get(
   "/:productId",
-  userMiddleware,
   rateLimitRoute,
   abortSignal(3000),
   productController.getProductById
 );
+
+/* Get product OG tags for sharing */
+router.get(
+  "/:productId/og",
+  rateLimitRoute,
+  abortSignal(3000),
+  productController.getProductOG
+);
+
 
 
 module.exports = router;

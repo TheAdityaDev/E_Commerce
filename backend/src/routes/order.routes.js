@@ -9,9 +9,9 @@ const orderController = require("../controller/order.controller");
 router.post(
   "/",
   rateLimitRoute,
-  abortSignal(3000),
+  abortSignal(10000),
   authMiddleware,
-  orderController.createOrder
+  orderController.createOrder,
 );
 
 router.get(
@@ -19,7 +19,15 @@ router.get(
   rateLimitRoute,
   abortSignal(3000),
   authMiddleware,
-  orderController.getUserOrderHistory
+  orderController.getUserOrderHistory,
+);
+
+router.get(
+  "/user/pending",
+  rateLimitRoute,
+  abortSignal(3000),
+  authMiddleware,
+  orderController.getPendingPaymentOrders,
 );
 
 router.put(
@@ -27,7 +35,7 @@ router.put(
   rateLimitRoute,
   abortSignal(3000),
   authMiddleware,
-  orderController.cancelOrder
+  orderController.cancelOrder,
 );
 
 router.get(
@@ -35,19 +43,15 @@ router.get(
   rateLimitRoute,
   abortSignal(3000),
   authMiddleware,
-  orderController.getOrdersById
+  orderController.getOrdersById,
 );
-
 
 router.get(
   "/item/:orderId",
   rateLimitRoute,
   abortSignal(3000),
   authMiddleware,
-  orderController.getOrderItemById
+  orderController.getOrderItemById,
 );
-
-
-
 
 module.exports = router;

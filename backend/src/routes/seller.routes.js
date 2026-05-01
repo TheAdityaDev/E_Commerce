@@ -4,6 +4,8 @@ const sellerController = require("../controller/seller.controller");
 const rateLimitRoute = require("../api/apilimit.api");
 const abortSignal = require("../api/abort.api");
 const sellerMiddleware = require("../middleware/sellerAuth.middleware");
+const userMiddleware = require("../middleware/userAuth.middleware");
+const authSelector = require("../middleware/auth.selector.middleware");
 
 /**
  * @description Get seller profile
@@ -15,7 +17,7 @@ const sellerMiddleware = require("../middleware/sellerAuth.middleware");
 router.get(
   "/profile",
   rateLimitRoute,
-  sellerMiddleware,
+  authSelector,
   abortSignal(3000), // ✅ now this is a function
   sellerController.getSellerProfile
 );
@@ -30,6 +32,7 @@ router.post(
 router.get(
   "/",
   rateLimitRoute,
+  userMiddleware,
   abortSignal(3000),
   sellerController.getAllSellers
 );
@@ -37,7 +40,7 @@ router.get(
 router.patch(
   "/",
   rateLimitRoute,
-  sellerMiddleware,
+  authSelector,
   abortSignal(3000),
   sellerController.updateSeller
 );

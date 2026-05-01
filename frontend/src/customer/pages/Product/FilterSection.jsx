@@ -6,13 +6,22 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import TextField from "@mui/material/TextField";
+import { useParams, useSearchParams } from "react-router-dom";
 import { colors } from "../../../data/filter/color";
 import { prices } from "../../../data/filter/price";
 import { discount } from "../../../data/filter/discount";
+import { useAppDispatch } from "../../../Redux Toolkit/store";
+import { filterProducts } from "../../../Redux Toolkit/Features/Customer/productSlice";
 
 const ITEMS_PER_LOAD = 20;
 
 const FilterSection = () => {
+  const dispatch = useAppDispatch();
+  const { categoryId } = useParams();
+  const [searchParams] = useSearchParams();
+  const searchParamString = searchParams.toString();
+  const searchKeyword = searchParams.get("search") || "";
+
   const [search, setSearch] = useState("");
   const [selectedColor, setSelectedColor] = useState(() => {
     return localStorage.getItem("selectedColor") || "";
@@ -23,7 +32,13 @@ const FilterSection = () => {
   const [selectedDiscount, setSelectedDiscount] = useState(() => {
     return localStorage.getItem("selectedDiscount") || "";
   });
+  const [selectedSize, setSelectedSize] = useState(() => {
+    return localStorage.getItem("selectedSize") || "";
+  });
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
+
+  const shouldShowSizes = /men|women|kids/i.test(categoryId || "");
+  const sizeOptions = ["S", "M", "L", "XL", "XXL"];
 
   const filteredColors = useMemo(() => {
     return colors.filter((item) =>
@@ -50,7 +65,35 @@ const FilterSection = () => {
     localStorage.setItem("selectedColor", selectedColor);
     localStorage.setItem("selectedPrice", selectedPrice);
     localStorage.setItem("selectedDiscount", selectedDiscount);
-  }, [selectedColor, selectedPrice, selectedDiscount]);
+    localStorage.setItem("selectedSize", selectedSize);
+  }, [selectedColor, selectedPrice, selectedDiscount, selectedSize]);
+
+  useEffect(() => {
+    // Find the price object to get min and max values
+    const priceObject = prices.find((p) => p.name === selectedPrice);
+    const discountObject = discount.find((d) => d.name === selectedDiscount);
+
+    dispatch(
+      filterProducts({
+        category: categoryId,
+        search: searchKeyword,
+        color: selectedColor.toLocaleLowerCase(),
+        size: shouldShowSizes ? selectedSize : "",
+        minPrice: priceObject?.min,
+        maxPrice: priceObject?.max,
+        minDiscount: discountObject?.min,
+      }),
+    );
+  }, [
+    selectedColor,
+    selectedPrice,
+    selectedDiscount,
+    selectedSize,
+    categoryId,
+    searchParamString,
+    shouldShowSizes,
+    dispatch,
+  ]);
 
   return (
     <div className="space-y-5 sticky top-10 bg-white">
@@ -62,11 +105,13 @@ const FilterSection = () => {
             setSelectedColor("");
             setSelectedDiscount("");
             setSelectedPrice("");
+            setSelectedSize("");
             setVisibleCount(ITEMS_PER_LOAD);
 
             localStorage.removeItem("selectedColor", "");
             localStorage.removeItem("selectedPrice", "");
             localStorage.removeItem("selectedDiscount", "");
+            localStorage.removeItem("selectedSize", "");
           }}
           className="bg-green-700 px-2 py-1 text-white cursor-pointer rounded-md hover:bg-green-700 transition-all duration-300 md:bg-green-700/50"
         >
@@ -117,13 +162,11 @@ const FilterSection = () => {
                 value={selectedColor}
                 onChange={(e) => {
                   setSelectedColor(e.target.value);
-                  localStorage.setItem("selectedColor", selectedColor);
                 }}
               >
                 {visibleColors.map((item) => (
-                  <div className="flex items-center">
+                  <div key={item.name} className="flex items-center">
                     <FormControlLabel
-                      key={item.name}
                       value={item.name}
                       control={<Radio />}
                       label={item.name}
@@ -167,7 +210,6 @@ const FilterSection = () => {
               value={selectedPrice}
               onChange={(e) => {
                 setSelectedPrice(e.target.value);
-                localStorage.setItem("selectedPrice", selectedPrice);
               }}
             >
               {prices.map((item) => (
@@ -200,7 +242,6 @@ const FilterSection = () => {
               value={selectedDiscount}
               onChange={(e) => {
                 setSelectedDiscount(e.target.value);
-                localStorage.setItem("selectedDiscount", selectedDiscount);
               }}
             >
               {discount.map((item) => (
@@ -213,6 +254,41 @@ const FilterSection = () => {
               ))}
             </RadioGroup>
           </FormControl>
+          {shouldShowSizes && (
+            <>
+              <Divider />
+              <FormControl>
+                <FormLabel
+                  sx={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "teal",
+                    mt: 2,
+                  }}
+                >
+                  Size
+                </FormLabel>
+                <RadioGroup
+                  value={selectedSize}
+                  onChange={(e) => setSelectedSize(e.target.value)}
+                >
+                  <FormControlLabel
+                    value={""}
+                    control={<Radio />}
+                    label={"All"}
+                  />
+                  {sizeOptions.map((s) => (
+                    <FormControlLabel
+                      key={s}
+                      value={s}
+                      control={<Radio />}
+                      label={s}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+            </>
+          )}
         </section>
       </div>
     </div>

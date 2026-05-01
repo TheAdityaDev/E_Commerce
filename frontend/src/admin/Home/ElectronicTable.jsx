@@ -1,13 +1,15 @@
-import React from 'react'
-import HomeCategoryTable from './HomeCategoryTable'
 
-const image= 
-  "https://images.pexels.com/photos/577514/pexels-photo-577514.jpeg?cs=srgb&dl=light-light-bulb-idea-577514.jpg&fm=jpg"
+import HomeCategoryTable from './HomeCategoryTable'
+import { useAppSelector } from '../../Redux Toolkit/store';
 
 const ElectronicTable = () => {
+  const homeCategories = useAppSelector(
+    (store) => store.homeCategory?.homeCategories || [],
+  );
+  
   return (
-    <div>
-      <HomeCategoryTable category="electronic" image={image} />
+    <div className="w-full">
+      <HomeCategoryTable categories={homeCategories} />
     </div>
   )
 }

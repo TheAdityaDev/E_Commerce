@@ -7,12 +7,15 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  Menu,
   MenuItem,
   Select,
   TextField,
 } from "@mui/material";
-import { Add, AddCircleOutline, AddPhotoAlternate, Close, X } from "@mui/icons-material";
+import {
+  AddCircleOutline,
+  AddPhotoAlternate,
+  Close,
+} from "@mui/icons-material";
 import { colors } from "../../data/filter/color";
 import { mainCategory } from "../../data/category/mainCategory";
 import { menLevelTwo } from "../../data/category/level2/menLevelTwo";
@@ -23,6 +26,11 @@ import { electronicsLevelThree } from "../../data/category/Level3/electronicsLev
 import { homeFurnitureLevelThree } from "../../data/category/Level3/homeFurnitureLevelThree";
 import { menLevelThree } from "../../data/category/Level3/menLevelThree";
 import { womenLevelThree } from "../../data/category/Level3/womenLevelThree";
+import { uploadToCloudinary } from "../../util/uploadToCloudinary";
+import { useAppDispatch } from "../../Redux Toolkit/store";
+import { createProduct } from "../../Redux Toolkit/Features/Seller/sellerProductSlice";
+import secureLocalStorage from "react-secure-storage";
+import { toast } from "react-toastify";
 
 const categoryTwo = {
   men: menLevelTwo,
@@ -45,27 +53,32 @@ const categoryThree = {
 const ITEMS_PER_LOAD = 20;
 
 const AddProducts = () => {
+  const dispatch = useAppDispatch();
   const [uploadImage, setUploadImage] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
 
+  const initialValues = {
+    title: "",
+    description: "",
+    mrpPrice: "",
+    sellingPrice: "",
+    quantity: "",
+    color: "",
+    images: [],
+    category: "",
+    category2: "",
+    category3: "",
+    size: "",
+  };
+
   const formik = useFormik({
-    initialValues: {
-      title: "",
-      description: "",
-      mrpPrice: "",
-      sellingPrice: "",
-      quantity: "",
-      color: "",
-      images: [
-        "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSE87yh8fXjYZo7eS7Bt2QfO51ukrWAUPPSbM_ETDMVYPCK9Z_Z5BHQXfnGWkGm7IgN3vemQtquDiq3Oy4fVDSUZnzhGotuTeYqItI2c2gbpCYmZTZ6VTTWUA",
-      ],
-      category: "",
-      category2: "",
-      category3: "",
-      sizes: "",
-    },
-    onSubmit: (values) => {
-      console.log(values);
+    initialValues,
+    onSubmit: async (values) => {
+      const token = secureLocalStorage.getItem("token");
+
+      await dispatch(createProduct({ token, request: values }));
+      // Reset form after successful submission
+      formik.resetForm();
     },
   });
 
@@ -84,8 +97,22 @@ const AddProducts = () => {
     }
   };
 
-  const handelImageChange = (e) => {
-    console.log(e.target.files[0]);
+  const handelImageChange = async (e) => {
+    const limit = 5;
+    if (formik.values.images.length >= limit) {
+      toast.warn(`You can only upload up to ${limit} images.`);
+      setUploadImage(false);
+      return;
+    }
+    const file = e.target.files[0];
+
+    setUploadImage(true);
+
+    const image = await uploadToCloudinary(file);
+
+    formik.values.images.push(image);
+    formik.setFieldValue("images", formik.values.images);
+    setUploadImage(false);
   };
 
   const handelRemove = (i) => {
@@ -105,7 +132,6 @@ const AddProducts = () => {
     // categoriesOrMap is an object mapping level2 ids to arrays
     return categoriesOrMap[parentCategoryId] || [];
   };
-
 
   return (
     <div>
@@ -137,7 +163,7 @@ const AddProducts = () => {
               {formik.values.images.map((image, i) => (
                 <div className="relative" key={i}>
                   <img
-                  loading="lazy"
+                    loading="lazy"
                     src={image}
                     alt=""
                     className="w-24 h-24 object-cover rounded-md"
@@ -216,7 +242,11 @@ const AddProducts = () => {
               >
                 <MenuItem value="none">none</MenuItem>
                 {filteredColors.slice(0, visibleCount).map((color, index) => (
-                  <MenuItem className="gap-5 flex items-center justify-center" key={index} value={color.name}>
+                  <MenuItem
+                    className="gap-5 flex items-center justify-center"
+                    key={index}
+                    value={color.name}
+                  >
                     <span
                       style={{
                         height: 20,
@@ -226,7 +256,7 @@ const AddProducts = () => {
                         display: "inline-flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        paddingBottom:10,
+                        paddingBottom: 10,
                         marginRight: 8,
                         border: "1px solid #ddd",
                       }}
@@ -250,10 +280,10 @@ const AddProducts = () => {
               </InputLabel>
               <Select
                 id="size"
-                value={formik.values.sizes}
+                value={formik.values.size}
                 onChange={formik.handleChange}
                 labelId="sizes-label"
-                name="sizes"
+                name="size"
                 label="Size"
                 required
               >
@@ -336,13 +366,33 @@ const AddProducts = () => {
               </Select>
             </FormControl>
           </Grid>
+          <TextField
+            fullWidth
+            type="number"
+            inputMode="numeric"
+            label="Quantity"
+            id="quantity"
+            name="quantity"
+            value={formik.values.quantity}
+            onChange={formik.handleChange}
+            required
+          />
         </Grid>
-          <Grid size={{ xs: 12, sm: 6, lg: 4  }} className="flex justify-end mt-5 p-10">
-            <Button fullWidth variant="outlined" color="success" className="flex items-center gap-1">
-              <AddCircleOutline />
-              Add Product
-            </Button>
-          </Grid>
+        <Grid
+          size={{ xs: 12, sm: 6, lg: 4 }}
+          className="flex justify-end mt-5 p-10"
+        >
+          <Button
+            fullWidth
+            variant="outlined"
+            color="success"
+            type="submit"
+            className="flex items-center gap-1"
+          >
+            <AddCircleOutline />
+            Add Product
+          </Button>
+        </Grid>
       </form>
     </div>
   );

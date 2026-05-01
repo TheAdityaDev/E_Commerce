@@ -1,51 +1,70 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../../config/api.config";
+import { toast } from "react-toastify";
 
 const API_URL = "/coupon";
 
 export const applyCoupon = createAsyncThunk(
-  "/coupon/applyCoupon",
-  { apply: String, code: String, orderValue: Number, token: String },
-  async ({ apply, code, orderValue, token }, { rejectWithValue }) => {
+  "coupon/applyCoupon",
+  async ({ apply, code, orderValue, token }, { rejectWithValue, signal }) => {
     try {
-      const response = await axiosInstance.post(`${API_URL}/apply`, null, {
-        apply,
-        code,
-        orderValue,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("apply coupon", response.data);
+      const response = await axiosInstance.post(
+        `${API_URL}/apply`,
+        { apply, code, orderValue },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal,
+          timeout: 10000 
+        }
+      );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to apply coupon");
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
+      const message = error?.response?.data?.message || "Failed to apply coupon";
+      toast.info(message);
+      return rejectWithValue(error?.response?.data || message);
     }
-  },
+  }
 );
 
-const  initialState = {
-    coupon:null,
-    loading:false,
-    error:null
-}
+const initialState = {
+  coupon: null,
+  loading: false,
+  error: null,
+  couponApplied: false,
+  appliedCode: null,
+};
 
 const couponSlice = createSlice({
-    name:'coupon',
-    initialState,
-    reducers:{},
+  name: "coupon",
+  initialState,
+  reducers: {
+    clearCoupon(state) {
+      state.coupon = null;
+      state.couponApplied = false;
+      state.appliedCode = null;
+      state.error = null;
+    },
+  },
     extraReducers:(builder)=>{
         builder.addCase(applyCoupon.pending,(state)=>{
             state.loading = true;
             state.error = null;
         })
-        .addCase(applyCoupon.fulfilled,(state,action)=>{
-            state.loading = false;
-            state.coupon = action.payload;
+        .addCase(applyCoupon.fulfilled, (state, action) => {
+          state.loading = false;
+          state.coupon = action.payload;
 
-            if (action.meta.arg.apply === "true") {
-                state.couponApplied = true
-            }
+          if (action.meta.arg.apply) {
+            state.couponApplied = true;
+            state.appliedCode = action.meta.arg.code;
+          }
         })
         .addCase(applyCoupon.rejected,(state,action)=>{
             state.loading = false;
@@ -55,5 +74,7 @@ const couponSlice = createSlice({
     }
 })
 
+
+export const { clearCoupon } = couponSlice.actions;
 
 export default couponSlice.reducer

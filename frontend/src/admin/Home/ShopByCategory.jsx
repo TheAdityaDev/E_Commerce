@@ -1,13 +1,16 @@
-import React from 'react'
-import HomeCategoryTable from './HomeCategoryTable'
+import { lazy, Suspense } from "react";
+const HomeCategoryTable = lazy(() => import("./HomeCategoryTable"));
+import { homeCategoriesPriorityList } from "../../data/homeCategories";
 
-const image = "https://d2v5dzhdg4zhx3.cloudfront.net/web-assets/images/storypages/primary/ProductShowcasesampleimages/JPEG/Product+Showcase-1.jpg"
 const ShopByCategory = () => {
+  const categories = homeCategoriesPriorityList
   return (
-    <div>
-      <HomeCategoryTable image={image} />
+    <div className="w-full">
+      <Suspense fallback={<h1>Loading...</h1>}>
+        <HomeCategoryTable categories={categories} />
+      </Suspense>
     </div>
-  )
-}
+  );
+};
 
-export default ShopByCategory
+export default ShopByCategory;

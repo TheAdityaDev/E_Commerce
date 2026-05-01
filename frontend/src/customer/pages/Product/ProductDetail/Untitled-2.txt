@@ -1,0 +1,583 @@
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import {
+  BadgeCheckIcon,
+  Bot,
+  Heart,
+  Minus,
+  Plus,
+  RefreshCcw,
+  Share2,
+  Shield,
+  ShoppingCartIcon,
+  Star,
+  Truck,
+  WalletCards,
+  X,
+} from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import SimilarProduct from "./SimilarProduct";
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../../../Redux Toolkit/store";
+import { fetchProductById } from "../../../../Redux Toolkit/Features/Customer/productSlice";
+import { useParams } from "react-router-dom";
+import { addItemToCart } from "../../../../Redux Toolkit/Features/Customer/cartSlice";
+import secureLocalStorage from "react-secure-storage";
+import TryNow from "./TryNow";
+
+const ProductDetail = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [show, setShow] = useState(false);
+  const { productId, categoryId } = useParams();
+  const imgRef = useRef(null);
+  const imgRefBox = useRef(null);
+  const { product, loading, error } = useAppSelector((store) => store.products);
+  const dispatch = useAppDispatch();
+  console.log(product?.category?._id || product?.category, "Product Category");
+
+  const token = secureLocalStorage.getItem("token");
+  const role = secureLocalStorage.getItem("role");
+
+  console.log("Token:", token);
+
+  // Show sizes only for clothing categories (men/women/kids).
+  // Category can arrive as route slug, populated object, or plain id string.
+  const getSizesByCategory = () => {
+    const routeCategory = String(categoryId || "").toLowerCase();
+    const productCategoryName = String(
+      product?.category?.name || "",
+    ).toLowerCase();
+    const productCategoryId = String(
+      product?.category?.categoryId ||
+        product?.category?._id ||
+        product?.category ||
+        "",
+    ).toLowerCase();
+
+    const categorySignals = `${routeCategory} ${productCategoryName} ${productCategoryId}`;
+
+    const clothingKeywords = [
+      "men",
+      "man",
+      "male",
+      "women",
+      "woman",
+      "female",
+      "kids",
+      "kid",
+      "child",
+      "children",
+      "boys",
+      "girls",
+      "fashion",
+      "wear",
+      "cloth",
+      "apparel",
+      "saree",
+      "dress",
+      "shirt",
+      "tshirt",
+      "kurta",
+      "jeans",
+      "pant",
+      "trouser",
+      "top",
+      "hoodie",
+      "jacket",
+    ];
+
+    const isClothingCategory = clothingKeywords.some((keyword) =>
+      categorySignals.includes(keyword),
+    );
+
+    return isClothingCategory
+      ? ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"]
+      : [];
+  };
+
+  const sizes = getSizesByCategory();
+  const stockQuantity = Number(product?.quantity || 0);
+  const isOutOfStock = stockQuantity <= 0;
+
+  useEffect(() => {
+    if (productId && (!product || product._id !== productId)) {
+      dispatch(fetchProductById(productId));
+    }
+  }, [dispatch, productId]);
+
+  const addCartItem = () => {
+    if (isOutOfStock) return;
+
+    const request = {
+      productId: product?._id,
+      quantity: quantity,
+      size: sizes.length > 0 && selectedSize ? selectedSize : "FREE",
+    };
+
+    dispatch(addItemToCart(request));
+  };
+
+  const images = Array.isArray(product?.images?.[0])
+    ? product.images[0] // 2D array fix
+    : product?.images || []; // fallback empty array
+
+  const [favorites, setFavorites] = useState(
+    JSON.parse(localStorage.getItem("favorite")) || [],
+  );
+
+  const [showZoom, setShowZoom] = useState(false);
+  const [showCursor, setShowCursor] = useState(false);
+  const [bgPos, setBgPos] = useState("0% 0%");
+  const [pos, setPos] = useState({ x: "0%", y: "0%" });
+
+  const handelCurrentImage = (index) => {
+    setCurrentImage(index);
+  };
+
+  const handleChangeQuantity = (value) => {
+    if (value === 0) {
+      setQuantity(1);
+      return;
+    }
+
+    setQuantity((prev) => {
+      const newQty = prev + value;
+      return newQty < 1 ? 1 : newQty;
+    });
+  };
+
+  if (quantity <= 0) {
+    throw new Error("Quantity must be 1.");
+  }
+
+  const showTryNow = () => {
+    if (isOutOfStock) return;
+    setShow((prev) => !prev);
+  };
+
+  // handle both stored ids and full objects when checking favorites
+  const isFavorite = favorites.some((p) =>
+    typeof p === "string" ? p === product?._id : p?._id === product?._id,
+  );
+
+  const handleFavorite = (prod) => {
+    let updated = [...favorites];
+
+    // determine existence whether favorites store ids or objects
+    const exists = updated.some((p) =>
+      typeof p === "string" ? p === prod._id : p?._id === prod._id,
+    );
+
+    if (exists) {
+      // REMOVE any matching id or object
+      updated = updated.filter((p) =>
+        typeof p === "string" ? p !== prod._id : p?._id !== prod._id,
+      );
+    } else {
+      // LIMIT CHECK
+      if (updated.length >= 10) {
+        alert("Max 10 products allowed");
+        return;
+      }
+
+      // ADD full product object
+      updated.push(prod);
+    }
+
+    setFavorites(updated);
+    localStorage.setItem("favorite", JSON.stringify(updated));
+  };
+
+  // Share Logic with Dynamic OG/Twitter Tags
+  const shareProduct = async () => {
+    if (!product) return;
+
+    try {
+      // Use backend OG endpoint for proper meta tags
+      const baseUrl =
+        window.location.hostname === "localhost"
+          ? "http://localhost:5000/api" // Backend port
+          : "https://your-api-domain.com"; // Production backend URL
+
+      const ogUrl = `${baseUrl}/products/${product._id}/og`;
+
+      // Share with OG tags from backend
+      if (navigator.share) {
+        await navigator.share({
+          title: product.title,
+          text: product.description,
+          url: ogUrl,
+        });
+      } else {
+        // Fallback: Copy share URL to clipboard
+        await navigator.clipboard.writeText(ogUrl);
+        alert("Share URL copied to clipboard:\n" + ogUrl);
+      }
+    } catch (error) {
+      console.log("Share error:", error);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!imgRef.current) return; //
+    const rect = imgRef.current.getBoundingClientRect();
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setShowCursor(true);
+    setPos({ x, y });
+
+    const bgX = (x / rect.width) * 100;
+    const bgY = (y / rect.height) * 100;
+
+    setBgPos(`${bgX}% ${bgY}%`);
+  };
+
+  const handleMouseMoveSquare = (e) => {
+    const rect = imgRefBox.current.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setPos(`${x}%  ${y}%`);
+  };
+
+  if (error || !product) {
+    return (
+      <div className="text-center mt-20">
+        <p className="text-red-500 mb-4">Failed to load product 😢</p>
+        <button
+          onClick={() => dispatch(fetchProductById(productId))}
+          className="px-4 py-2 bg-teal-500 text-white rounded"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen px-5 lg:px-20 pt-10">
+      <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2 sm:p-4">
+            {/* Modal Box */}
+            <div
+              className="
+        relative w-full max-h-[95vh] overflow-hidden
+        rounded-2xl border border-slate-200 bg-slate-50 shadow-2xl
+        sm:w-[min(920px,95vw)]
+      "
+            >
+              {/* Close Button */}
+              <X
+                onClick={showTryNow}
+                className="
+          absolute right-3 top-3 z-20 cursor-pointer
+          rounded-full bg-white/90 p-1 text-gray-700 shadow
+          hover:bg-white
+        "
+              />
+
+              {/* Content */}
+              <div className="h-[95vh] sm:h-[90vh] overflow-hidden pt-10">
+                <TryNow image={images[currentImage]} allImages={images} />
+              </div>
+            </div>
+          </div>
+        )}
+        <section className="flex flex-col lg:flex-row gap-3">
+          <div className="w-full flex lg:w-[15%] flex-wrap lg:flex-col gap-5 mr-5">
+            {images?.map((img, index) => (
+              <img
+                onClick={() => handelCurrentImage(index)}
+                src={img}
+                key={index}
+                style={{
+                  border: currentImage === index ? "2px solid teal" : "",
+                }}
+                loading="lazy"
+                ref={imgRefBox}
+                onMouseMove={handleMouseMoveSquare}
+                alt={product?.title}
+                className="w-15 flex flex-wrap object-cover rounded-md lg:w-full"
+              />
+            ))}
+          </div>
+          <div className="w-full lg:w-[85%]">
+            <div className="img-magnifier-container relative inline-block">
+              <img
+                loading="lazy"
+                ref={imgRef}
+                src={images?.[currentImage] || "/placeholder.png"}
+                onMouseEnter={() => setShowZoom(true)}
+                onMouseLeave={() => setShowZoom(false)}
+                onMouseMove={handleMouseMove}
+                className="w-96 rounded-md hover:scale-[1.05] transition-all duration-300 ease-in-out"
+                alt={product?.title}
+              />
+
+              {showCursor && (
+                <div
+                  className="absolute w-10 h-10 pointer-events-none"
+                  style={{
+                    display: showZoom ? "block" : "none",
+                    left: `${pos.x}px`,
+                    top: `${pos.y}px`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  {/* top-left */}
+                  <span className="absolute top-0 left-0 w-2 h-2  border-t-2 border-l-2 border-black" />
+                  {/* top-right */}
+                  <span className="absolute top-0 right-0 w-2 h-2  border-t-2 border-r-2 border-black" />
+                  {/* bottom-left */}
+                  <span className="absolute bottom-0 left-0 w-2 h-2  border-b-2 border-l-2 border-black" />
+                  {/* bottom-right */}
+                  <span className="absolute bottom-0 right-0 w-2 h-2  border-b-2 border-r-2 border-black" />
+                </div>
+              )}
+            </div>
+
+            <div
+              className={`absolute z-20 right-2 top-2 w-[90vw]  sm:w-[60vw] md:w-[50vw] lg:w-[50vw] 
+  h-[250px] sm:h-[300px] md:h-[350px] lg:h-[650px] border-2 border-teal-400 rounded-md overflow-hidden pointer-events-none lg:-mt-10`}
+              style={{ display: showZoom ? "block" : "none" }}
+            >
+              {showZoom && (
+                <div
+                  className="absolute inset-0 border rounded-md bg-no-repeat bg-center bg-cover"
+                  style={{
+                    backgroundImage: `url(${images[currentImage]})`,
+                    backgroundSize: "200%",
+                    backgroundPosition: bgPos,
+                    optimizeSpeed: "crisp-edges",
+                    color: "transparent",
+                    imageOrientation: "-moz-initial",
+                    imageResolution: "from-image",
+                    imageRendering: "auto",
+                    loading: "lazy",
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </section>
+        <section>
+          <h1 className="font-bold text-lg text-teal-400">{product?.title}</h1>
+          {stockQuantity > 0 && (
+            <p className="text-sm text-gray-500 mt-2">
+              Only {stockQuantity} left in stock!
+            </p>
+          )}
+          {isOutOfStock && (
+            <p className="text-sm text-red-500 mt-2">Out of stock</p>
+          )}
+          <p className="text-gray-500 font-semibold mt-2 text-sm">
+            {product?.description}
+          </p>
+          <div className="flex justify-between items-center py-2 border w-45 px-3 mt-5 rounded-2xl">
+            <div className="flex items-center gap-1">
+              <span className="text-xl">4</span>
+              <Star className="size-6 text-white" style={{ fill: "gold" }} />
+            </div>
+            <Divider orientation="vertical" className="bg-black" flexItem />
+            <span className="text-lg text-gray-600">478 Rating</span>
+          </div>
+          <div className="space-y-2 mt-5">
+            <div className="flex items-end gap-3">
+              <span className="font-semibold text-2xl text-teal-500">
+                ₹{product?.sellingPrice}
+              </span>
+              <span className="font-semibold text-gray-500 line-through">
+                {product?.mrpPrice}
+              </span>
+              <span className="font-semibold text-lg text-teal-500">
+                {product?.discountPercentage}% off
+              </span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Include of all taxes. Free Shipping above ₹79 .
+            </p>
+          </div>
+          <div className="mt-7 space-y-3">
+            <div className="flex flex-wrap gap-3 items-center">
+              <Shield className="size-6 text-teal-300/10 fill-teal-200" />
+              <p className="ml-2">100% Original & Authentic Products.</p>
+            </div>
+            {/* 2 */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <BadgeCheckIcon className="size-6 text-white fill-teal-200" />
+              <p className="ml-2">100% Original & Authentic Products.</p>
+            </div>
+            {/* 3 */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <Truck className="size-6 text-teal-300/10 fill-teal-200" />
+              <p className="ml-2">Free Shipping & Returns</p>
+            </div>
+            {/* 4 */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <WalletCards className="size-6 text-teal-300" />
+              <p className="ml-2">Pay on delivery might be available</p>
+            </div>
+          </div>
+          {token && role !== "seller" ? (
+            <div className="flex mt-7 gap-3">
+              {sizes.length > 0 && (
+                <div className="flex gap-2">
+                  {sizes.map((size) => (
+                    <button
+                      key={size}
+                      disabled={isOutOfStock}
+                      onClick={() => setSelectedSize(size)}
+                      onDoubleClick={() => setSelectedSize(false)}
+                      className={`px-4 py-2 border rounded-lg font-medium transition 
+          ${
+            selectedSize === size
+              ? "bg-teal-400 text-white border-none"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }
+          ${
+            product?.quantity <= 0 && size !== "FREE"
+              ? "cursor-not-allowed opacity-50"
+              : ""
+          }
+        `}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            " "
+          )}
+          {token && role !== "seller" ? (
+            <>
+              <div className="mt-7 space-y-2">
+                <h1 className="text-teal-500 text-xl">Quantity</h1>
+                <div className="flex items-center gap-5 w-35 justify-between">
+                  <Button
+                    onClick={() => handleChangeQuantity(-1)}
+                    className={`px-3 text-4xl py-1 rounded-md ${
+                      quantity <= 1 ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                    variant="outlined"
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="size-6 text-teal-500" />
+                  </Button>
+                  <span className="text-2xl font-semibold transition-transform duration-300 m-3">
+                    {quantity}
+                  </span>
+                  <Button
+                    onClick={() => handleChangeQuantity(+1)}
+                    className={`px-3 text-4xl py-1 rounded-md ${
+                      quantity >= product?.quantity
+                        ? "cursor-not-allowed opacity-50"
+                        : ""
+                    }`}
+                    variant="outlined"
+                    disabled={quantity >= product?.quantity}
+                  >
+                    <Plus className="size-6 text-teal-500" />
+                  </Button>
+
+                  {quantity > 1 && (
+                    <Button
+                      onClick={() => handleChangeQuantity(0)}
+                      className="px-3 text-4xl py-1 left-15 rounded-md lg:right-0 absolute"
+                      variant="outlined"
+                    >
+                      <RefreshCcw className="size-6 text-teal-500" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            " "
+          )}
+          {token && role !== "seller" ? (
+            <div className="mt-6 flex items-center gap-5">
+              <Button
+                onClick={addCartItem}
+                disabled={isOutOfStock}
+                startIcon={
+                  <ShoppingCartIcon className="size-6 text-teal-500" />
+                }
+                variant="outlined"
+                fullWidth
+                sx={{ py: "1rem" }}
+              >
+                Add To Cart
+              </Button>
+              <Button
+                onClick={shareProduct}
+                startIcon={<Share2 className="size-6 text-green-500" />}
+                variant="outlined"
+                fullWidth
+                sx={{ py: "1rem" }}
+              >
+                Share
+              </Button>
+              <Button
+                onClick={showTryNow}
+                disabled={isOutOfStock}
+                startIcon={<Bot className="size-6 text-gray-500" />}
+                variant="outlined"
+                fullWidth
+                sx={{ py: "1rem" }}
+              >
+                Try Now
+              </Button>
+
+              <Button
+                onClick={() => handleFavorite(product)}
+                startIcon={
+                  <Heart
+                    className={`size-6 ${
+                      isFavorite ? "text-red-500 fill-red-500" : "text-gray-400"
+                    }`}
+                  />
+                }
+                variant="outlined"
+                fullWidth
+                sx={{ py: "1rem" }}
+              >
+                {isFavorite ? "Remove" : "Add"}
+              </Button>
+            </div>
+          ) : (
+            " "
+          )}
+          <div className="mt-4">
+            <p>
+              Step into style and comfort with these Adidas black shoes,
+              designed for everyday performance. Crafted with a sleek, modern
+              silhouette that pairs effortlessly with any outfit. The breathable
+              upper keeps your feet cool, while the cushioned sole ensures
+              all-day comfort. Durable construction provides reliable support
+              for both casual wear and active use. Perfect for those who value
+              versatility, quality, and iconic Adidas style.
+            </p>
+          </div>
+        </section>
+      </div>
+      <section className="mt-20 border-t pt-10">
+        <h1 className="text-lg font-bold">Similar Products</h1>
+        <div className="pt-5 gap-3 w-full">
+          <SimilarProduct />
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default ProductDetail;

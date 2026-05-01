@@ -46,14 +46,7 @@ const LoginForm = () => {
     validationSchema: auth.otpSent ? LoginSchema : EmailSchema,
 
     onSubmit: (values) => {
-      dispatch(signin({ ...values, navigate }))
-        .then(() => {
-          navigate("/")
-          toast.success("Login successful 🎉");
-        })
-        .catch(() => {
-          toast.error("Invalid credentials ❌");
-        });
+      dispatch(signin({ ...values, navigate })).unwrap()
     },
   });
 
@@ -61,7 +54,8 @@ const LoginForm = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = (e) => {
+    e.preventDefault();
     const email = "signin_" + formik.values.email.trim();
 
     if (!email) {
@@ -73,8 +67,6 @@ const LoginForm = () => {
 
     dispatch(sendLoginSignUpOtp(email))
       .unwrap()
-      .then(() => toast.success("OTP sent successfully ✅"))
-      .catch(() => toast.error("Failed to send OTP ❌"));
   };
 
   return (
@@ -110,9 +102,12 @@ const LoginForm = () => {
           <TextField
             fullWidth
             label="Enter 6 digit OTP"
+            type="number"
+            inputMode="numeric"
             name="otp"
             autoFocus
             value={formik.values.otp}
+            about="otp"
             onChange={(e) => {
               const value = e.target.value.replace(/\D/g, "");
               formik.setFieldValue("otp", value);

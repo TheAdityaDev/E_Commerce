@@ -8,17 +8,15 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
-  Menu,
-  MenuItem,
-  Fade,
   FormControl,
   InputLabel,
   Select,
   IconButton,
+  MenuItem,
 } from "@mui/material";
 import { useState } from "react";
-import { DeleteForeverOutlined, Edit, X } from "@mui/icons-material";
+import { DeleteForeverOutlined, Edit } from "@mui/icons-material";
+import { X } from "lucide-react";
 
 /* -------------------- Styled Components -------------------- */
 
@@ -50,29 +48,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 /* -------------------- Dummy Data -------------------- */
 
-function createData(
-  id,
-  sellerName,
-  email,
-  mobile,
-  gstin,
-  businessName,
-  accountStatus,
-) {
-  return { id, sellerName, email, mobile, gstin, businessName, accountStatus };
-}
-
-const rows = [
-  createData(
-    1,
-    "John Traders",
-    "john@email.com",
-    "https://media.istockphoto.com/id/973481674/photo/stylish-man-posing-on-grey-background.jpg?s=2048x2048&w=is&k=20&c=kd0X3EwcoMRCXtgyyVLmuMuWvZe5d7MewThg2ebgwW4=",
-    "9876543210",
-    "John Pvt Ltd",
-  ),
-];
-
 const accountStatus = [
   { status: "PENDING_VERIFICATION", title: "Pending Verification" },
   { status: "ACTIVE", title: "Active" },
@@ -84,53 +59,22 @@ const accountStatus = [
 
 /* -------------------- Component -------------------- */
 
-const HomeCategoryTable = ({ image }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRowId, setSelectedRowId] = useState(null);
+const HomeCategoryTable = ({categories}) => {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [filterStatus, setFilterStatus] = useState("");
-  const [showImage, setShowImage] = useState(false);
 
-  const open = Boolean(anchorEl);
-
-  const handleMenuClick = (event, rowId) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedRowId(rowId);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    setSelectedRowId(null);
-  };
-
-  const handleUpdateStatus = (newStatus) => {
-    console.log("Row:", selectedRowId, "New Status:", newStatus);
-    handleClose();
-  };
-
-  const filteredRows =
-    filterStatus === ""
-      ? rows
-      : rows.filter((row) => row.accountStatus === filterStatus);
+  const displayHeaders = ["Sr.No", "ID", "Image", "Category Name", "Edit", "Delete"];
 
   return (
     <>
       {/* FULL SCREEN IMAGE MODAL */}
-      {showImage && (
+      {selectedImage && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <button
-            onClick={() => setShowImage(false)}
-            className="absolute top-5 right-5 text-white bg-gray-700/50 p-2 rounded-full hover:bg-gray-600 transition"
-          >
+          <button className=" absolute bg-white z-20 top-5 px-2 py-3 rounded-2xl right-10 cursor-pointer" onClick={() => setSelectedImage(null)}>
             <X size={28} />
           </button>
 
-          <img
-          loading="eager"
-          fetchPriority="high"
-            className="max-h-[90vh] max-w-full rounded-xl object-contain"
-            src={image}
-            alt="Product"
-          />
+          <img className="max-h-[90vh] max-w-full rounded-2xl" src={selectedImage} alt="" />
         </div>
       )}
       <div style={{ padding: "16px" }}>
@@ -176,35 +120,30 @@ const HomeCategoryTable = ({ image }) => {
           >
             <TableHead>
               <TableRow>
-                <StyledTableCell>Sr.No</StyledTableCell>
-                <StyledTableCell>ID</StyledTableCell>
-                <StyledTableCell>Image</StyledTableCell>
-                <StyledTableCell>Category</StyledTableCell>
-                <StyledTableCell>Name</StyledTableCell>
-                <StyledTableCell>Edit</StyledTableCell>
-                <StyledTableCell>Delete</StyledTableCell>
+                {displayHeaders.map((header) => (
+                  <StyledTableCell key={header}>{header}</StyledTableCell>
+                ))}
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {filteredRows.map((row) => (
-                <StyledTableRow key={row.id}>
-                  <StyledTableCell>{row.sellerName}</StyledTableCell>
-                  <StyledTableCell>{row.email}</StyledTableCell>
+              {categories?.map((item, index) => (
+                <StyledTableRow key={item?._id}>
+                  <StyledTableCell>{index + 1}</StyledTableCell>
+                  <StyledTableCell>{item?._id}</StyledTableCell>
 
                   <StyledTableCell>
                     <img
-                    loading="lazy"
-                    onClick={() => setShowImage(true)}
-                      src={image}
-                      className="w-30 h-20 rounded-md object-cover cursor-pointer hover:scale-110 "
-                      alt=""
+                      loading="lazy"
+                      onClick={() => setSelectedImage(item?.image)}
+                      src={item?.image}
+                      className="w-30 h-auto rounded-md object-cover cursor-pointer hover:scale-110 "
+                      alt={item?.section || item?.name}
                     />
                   </StyledTableCell>
 
-                  <StyledTableCell>{row.gstin}</StyledTableCell>
+                  <StyledTableCell >{ item?.name || item?.categoryName}</StyledTableCell>
 
-                  <StyledTableCell>{row.businessName}</StyledTableCell>
                   <StyledTableCell>
                     <IconButton>
                       <Edit color="primary" />
@@ -220,23 +159,6 @@ const HomeCategoryTable = ({ image }) => {
             </TableBody>
           </Table>
         </TableContainer>
-
-        {/* -------------------- Status Menu -------------------- */}
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          slots={{ transition: Fade }}
-        >
-          {accountStatus.map((item) => (
-            <MenuItem
-              key={item.status}
-              onClick={() => handleUpdateStatus(item.status)}
-            >
-              {item.title}
-            </MenuItem>
-          ))}
-        </Menu>
       </div>
     </>
   );

@@ -8,34 +8,30 @@ class cartController {
       const user = await req.user;
 
       if (!user) throw new Error("User not found");
-      
+
       const cart = await cartService.findUserCart(user);
 
       return res.status(200).json(cart);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   }
 
   async addCartItemToCart(req, res) {
     try {
       const user = await req.user;
-      const product = await productService.findProductById(
-        req.body.productId
-      );
-      
-      const cartItem = await cartService.addCartItem(
+      const product = await productService.findProductById(req.body.productId);
+
+      const cartItems = await cartService.addCartItem(
         user,
         product,
         req.body.size,
-        req.body.quantity
+        req.body.quantity,
       );
 
-      
-
-      return res.status(200).json(cartItem);
+      return res.status(200).json(cartItems);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   }
 
@@ -44,33 +40,43 @@ class cartController {
       const user = req.user;
       await cartItemService.removeCartItem(user._id, req.params.cartItemId);
 
-      res.status(200).json({ message: "Cart item deleted successfully" });
+      return res.status(200).json({ message: "Cart item deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   }
 
-  async updateCartItem(req, res) {
-    try {
-      const cartItemId = req.params.cartItemId;
-      const { quantity } = req.body;
-      const user = await req.user;
+ async updateCartItem(req, res) {
+  try {
+    const cartItemId = req.params.cartItemId;    
+    const userId = req.user._id; // ✅ secure
+    const { quantity } = req.body;
 
-      let updatedCartItem;
-      if (quantity > 0) {
-        updatedCartItem = await cartService.updateCartItem(
-          user._id,
-          cartItemId,
-          { quantity }
-        );
-      }
-
-      res.status(200).json(updatedCartItem)
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // ✅ validation
+    if (!quantity || quantity < 0) {
+      return res.status(400).json({
+        message: "Quantity must be greater than 0",
+      });
     }
+
+    let updatedCartItem;
+
+    if (quantity > 0) {
+      updatedCartItem = await cartService.updateCartItem(
+        userId,
+        cartItemId,
+        { quantity }
+      );
+    }
+
+    return res.status(200).json(updatedCartItem);
+
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 }
+}
 
-
-module.exports = new cartController()
+module.exports = new cartController();

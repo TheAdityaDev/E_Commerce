@@ -16,7 +16,13 @@ import {
   InputLabel,
   Select,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
+import {
+  fetchSellers,
+  updateSellerAccountStatus,
+} from "../../Redux Toolkit/Features/Seller/sellerSlice";
+import secureLocalStorage from "react-secure-storage";
 
 /* -------------------- Styled Components -------------------- */
 
@@ -48,56 +54,32 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 /* -------------------- Dummy Data -------------------- */
 
-function createData(
-  id,
-  sellerName,
-  email,
-  mobile,
-  gstin,
-  businessName,
-  accountStatus,
-) {
-  return { id, sellerName, email, mobile, gstin, businessName, accountStatus };
-}
-
-const rows = [
-  createData(
-    1,
-    "John Traders",
-    "john@email.com",
-    "9876543210",
-    "22AAAAA0000A1Z5",
-    "John Pvt Ltd",
-    "ACTIVE",
-  ),
-  createData(
-    2,
-    "Aditya Traders",
-    "john@email.com",
-    "9876543210",
-    "22AAAAA0000A1Z5",
-    "John Pvt Ltd",
-    "PENDING_VERIFICATION",
-  ),
-];
-
 const accountStatus = [
   { status: "PENDING_VERIFICATION", title: "Pending Verification" },
   { status: "ACTIVE", title: "Active" },
   { status: "SUSPENDED", title: "Suspended" },
   { status: "DEACTIVATED", title: "Deactivated" },
-  { status: "BANDED", title: "Banded" },
+  { status: "BANNED", title: "Banded" },
   { status: "CLOSED", title: "Closed" },
 ];
 
 /* -------------------- Component -------------------- */
 
 const SellerTable = () => {
+  const dispatch = useAppDispatch();
+  const sellers = useAppSelector((store) => store?.seller?.sellers);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("");
+  const [status, setStatus] = useState("");
 
   const open = Boolean(anchorEl);
+
+  const token = secureLocalStorage.getItem("token");
+  useEffect(() => {
+    dispatch(fetchSellers({ status, token }));
+  }, [status, token, dispatch]);
 
   const handleMenuClick = (event, rowId) => {
     setAnchorEl(event.currentTarget);
@@ -110,14 +92,25 @@ const SellerTable = () => {
   };
 
   const handleUpdateStatus = (newStatus) => {
-    console.log("Row:", selectedRowId, "New Status:", newStatus);
+    console.log("Status", newStatus);
+
+    dispatch(
+      updateSellerAccountStatus({
+        token: token,
+        sellerId: selectedRowId,
+        status: newStatus,
+      }),
+    ).then(() => {
+      dispatch(fetchSellers({ status: "", token }));
+    });
     handleClose();
   };
 
-  const filteredRows =
-    filterStatus === ""
-      ? rows
-      : rows.filter((row) => row.accountStatus === filterStatus);
+  const filteredSeller = () => {
+    return filterStatus === ""
+      ? sellers
+      : sellers?.filter((row) => row.accountStatus === filterStatus);
+  };
 
   return (
     <div style={{ padding: "16px" }}>
@@ -178,7 +171,7 @@ const SellerTable = () => {
               <StyledTableCell
                 sx={{ display: { xs: "none", md: "table-cell" } }}
               >
-                Business Name
+                Account Created
               </StyledTableCell>
               <StyledTableCell>Account Status</StyledTableCell>
               <StyledTableCell align="center">Change Status</StyledTableCell>
@@ -186,31 +179,32 @@ const SellerTable = () => {
           </TableHead>
 
           <TableBody>
-            {filteredRows.map((row) => (
-              <StyledTableRow key={row.id}>
-                <StyledTableCell>{row.sellerName}</StyledTableCell>
-                <StyledTableCell>{row.email}</StyledTableCell>
+            {filteredSeller(sellers || [])?.map((item) => (
+              <StyledTableRow key={item._id}>
+                <StyledTableCell>{item?.sellerName}</StyledTableCell>
+                <StyledTableCell>{item?.email}</StyledTableCell>
 
                 <StyledTableCell
                   sx={{ display: { xs: "none", sm: "table-cell" } }}
                 >
-                  {row.mobile}
+                  {item.mobile}
                 </StyledTableCell>
 
                 <StyledTableCell
                   sx={{ display: { xs: "none", md: "table-cell" } }}
                 >
-                  {row.gstin}
+                  {item.GSTIN}
                 </StyledTableCell>
 
                 <StyledTableCell
                   sx={{ display: { xs: "none", md: "table-cell" } }}
                 >
-                  {row.businessName}
+                  {item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString()
+                    : "N/A"}
                 </StyledTableCell>
 
-                <StyledTableCell>{row.accountStatus}</StyledTableCell>
-
+                <StyledTableCell>{item.accountStatus}</StyledTableCell>
                 <StyledTableCell align="center">
                   <Button
                     variant="outlined"
@@ -219,7 +213,7 @@ const SellerTable = () => {
                     sx={{
                       fontSize: { xs: "0.7rem", sm: "0.8rem" },
                     }}
-                    onClick={(e) => handleMenuClick(e, row.id)}
+                    onClick={(e) => handleMenuClick(e, item._id)}
                   >
                     Update
                   </Button>
@@ -240,6 +234,7 @@ const SellerTable = () => {
         {accountStatus.map((item) => (
           <MenuItem
             key={item.status}
+            value={item.status}
             onClick={() => handleUpdateStatus(item.status)}
           >
             {item.title}

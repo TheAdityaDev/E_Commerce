@@ -1,48 +1,58 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../../config/api.config";
 
-const API_URL = "/home";
+const API_URL = "/home/category";
 
 export const updateHomeCategory = createAsyncThunk(
   "/home/updateHomeCategory",
-  async ({ token, data, id }, { rejectWithValue }) => {
+  async ({ token, data, id }, { rejectWithValue, signal }) => {
     try {
       const response = await axiosInstance.patch(
-        `${API_URL}/home-categories`,
+        `${API_URL}/home-category/${id}`,
         data,
-
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          params: {
-            id: id,
-          },
-        },
+          params: { id },
+          signal,      
+          timeout: 10000 
+        }
       );
-      console.log("update home category", response.data);
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(
-        error.response?.data || "Failed to update home category",
+        error.response?.data || "Failed to update home category"
       );
     }
-  },
+  }
 );
 
 export const fetchHomeCategory = createAsyncThunk(
   "/home/fetchHomeCategory",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, signal }) => {
     try {
-      const response = await axiosInstance.get(`${API_URL}/home-categories`);
-      console.log("fetch home category", response.data);
+      const response = await axiosInstance.get(`${API_URL}/home-category`, {
+        signal,
+        timeout: 10000,
+      });
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(
-        error.response?.data || "Failed to fetch home category",
+        error.response?.data || "Failed to fetch home category"
       );
     }
-  },
+  }
 );
 
 const initialState = {

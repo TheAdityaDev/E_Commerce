@@ -11,7 +11,13 @@ import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Fade from "@mui/material/Fade";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
+import {
+  fetchSellerOrders,
+  updateOrderStatus,
+} from "../../Redux Toolkit/Features/Seller/sellerOrderSlice";
+import secureLocalStorage from "react-secure-storage";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -33,44 +39,47 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData("Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData("Eclair", 262, 16.0, 24, 6.0),
-  createData("Cupcake", 305, 3.7, 67, 4.3),
-  createData("Gingerbread", 356, 16.0, 49, 3.9),
-];
-
 const orderStatus = [
-  { color: "#FFA500", label: "PENDING" },
   { color: "#F5BCBA", label: "PLACED" },
-  { color: "#F5BCBA", label: "CONFIRMED" },
   { color: "#1E90FF", label: "SHIPPED" },
   { color: "#32CD32", label: "DELIVERED" },
-  { color: "#FF0000", label: "CANCELLED" },
+  { color: "#FF6347", label: "CANCELLED" },
 ];
 
 const OrderTable = () => {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const dispatch = useAppDispatch();
+  const { orders, loading } = useAppSelector((store) => store?.sellerOrders);
+  const [anchorEl, setAnchorEl] = useState({}); // Store anchor per orderId
 
-  const open = Boolean(anchorEl);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleClick = (event, orderId) => {
+    setAnchorEl({ ...anchorEl, [orderId]: event.currentTarget });
   };
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleClose = (orderId) => {
+    setAnchorEl({ ...anchorEl, [orderId]: null });
   };
 
+  const token = secureLocalStorage.getItem("token");
 
-  const handelUpdateOrder =(id , status) =>{
-    const log = {id,status}
-    console.table(log)
-    handleClose()
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (token) {
+        dispatch(fetchSellerOrders(token));
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer); // ✅ correct cleanup
+  }, [dispatch]);
+
+  const handelUpdateOrder = (id, status) => {
+    dispatch(
+      updateOrderStatus({
+        orderId: id,
+        orderStatus: status.label,
+        token: token,
+      }),
+    );
+    handleClose(id);
+  };
 
   return (
     <TableContainer component={Paper}>
@@ -78,77 +87,108 @@ const OrderTable = () => {
         <TableHead>
           <TableRow>
             <StyledTableCell>Order Id</StyledTableCell>
-            <StyledTableCell align="right">Product Details</StyledTableCell>
-            <StyledTableCell align="center">Shopping Address</StyledTableCell>
+            <StyledTableCell align="left">Product Details</StyledTableCell>
+            <StyledTableCell align="left">Shipping Address</StyledTableCell>
             <StyledTableCell align="center">Order Status</StyledTableCell>
             <StyledTableCell align="center">Update</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <StyledTableRow key={row.name}>
-              <StyledTableCell>{row.calories}</StyledTableCell>
-              <StyledTableCell>
-                <div className="flex justify-between">
-                  <div className="flex gap-3 flex-wrap">
-                    <img
-                    loading="lazy"
-                      className="h-30 w-30 object-cover rounded-lg"
-                      src="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSE87yh8fXjYZo7eS7Bt2QfO51ukrWAUPPSbM_ETDMVYPCK9Z_Z5BHQXfnGWkGm7IgN3vemQtquDiq3Oy4fVDSUZnzhGotuTeYqItI2c2gbpCYmZTZ6VTTWUA"
-                      alt=""
-                    />
+          {Array.isArray(orders) &&
+            orders.map((order) => (
+              <StyledTableRow key={order._id}>
+                <StyledTableCell
+                  sx={{ fontWeight: "bold", fontSize: "0.75rem" }}
+                >
+                  #{order._id.slice(-8).toUpperCase()}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {order?.orderItems?.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-4 mb-2 last:mb-0"
+                    >
+                      <div className="w-16 h-20 shrink-0">
+                        <img
+                          loading="lazy"
+                          className="w-full h-full object-cover rounded-md border"
+                          src={item?.product?.images[0]}
+                          alt={item?.product?.title}
+                        />
+                      </div>
+                      <div className="flex flex-col text-xs">
+                        <span className="font-bold line-clamp-1">
+                          {item?.product?.title}
+                        </span>
+                        <span className="text-gray-500">
+                          Price: ₹{item?.product?.sellingPrice}
+                        </span>
+                        <span className="text-gray-500">
+                          Size: {item?.size}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  <div className="text-xs max-w-[200px]">
+                    <p className="font-semibold">
+                      {order?.shippingAddress?.name}
+                    </p>
+                    <p className="text-gray-600">
+                      {order?.shippingAddress?.address},{" "}
+                      {order?.shippingAddress?.city}
+                    </p>
+                    <p className="text-gray-600">
+                      {order?.shippingAddress?.state} -{" "}
+                      {order?.shippingAddress?.pincode}
+                    </p>
                   </div>
-                  <div className="flex flex-col justify-center py-6">
-                    <h1>Title: Men Shoes</h1>
-                    <h1>MRP: ₹2999</h1>
-                    <h1>Color: Blue</h1>
-                    <h1>Size: M</h1>
-                  </div>
-                </div>
-              </StyledTableCell>
-              <StyledTableCell align="center" className="m-20">
-                {row.fat}
-              </StyledTableCell>
-              <StyledTableCell align="center">
+                </StyledTableCell>
+                <StyledTableCell align="center">
                   <Chip
-                    label="hello"
-                    color="primary"
+                    label={order?.orderStatus}
+                    size="small"
+                    sx={{
+                      fontWeight: "bold",
+                      borderColor: orderStatus.find(
+                        (s) => s.label === order?.orderStatus,
+                      )?.color,
+                      color: orderStatus.find(
+                        (s) => s.label === order?.orderStatus,
+                      )?.color,
+                    }}
                     variant="outlined"
                   />
-                  
                 </StyledTableCell>
-              <StyledTableCell align="center">
-                <Button
-                  id="fade-button"
-                  aria-controls={open ? "fade-menu" : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={open ? "true" : undefined}
-                  onClick={handleClick}
-                  variant="outlined"
-                  size="small"
-                >
-                  Status
-                </Button>
-
-                <Menu
-                  id="fade-menu"
-                  slotProps={{
-                    list: {
-                      "aria-labelledby": "fade-button",
-                    },
-                  }}
-                  slots={{ transition: Fade }}
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={handleClose}
-                >
-                  {orderStatus.map((status) => (
-                    <MenuItem onClick={()=>handelUpdateOrder(status.label,status)}>{status.label}</MenuItem>
-                  ))}
-                </Menu>
-              </StyledTableCell>
-            </StyledTableRow>
-          ))}
+                <StyledTableCell align="center">
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={order?.orderStatus === "DELIVERED" || order?.orderStatus === "CANCELLED"}
+                    onClick={(e) => handleClick(e, order._id)}
+                    sx={{ textTransform: "none", fontSize: "0.7rem" }}
+                  >
+                   Update Status
+                  </Button>
+                  <Menu
+                    anchorEl={anchorEl[order._id]}
+                    open={Boolean(anchorEl[order._id])}
+                    onClose={() => handleClose(order._id)}
+                    TransitionComponent={Fade}
+                  >
+                    {orderStatus.map((status) => (
+                      <MenuItem
+                        key={status.label}
+                        onClick={() => handelUpdateOrder(order._id, status)}
+                      >
+                        {status.label}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </StyledTableCell>
+              </StyledTableRow>
+            ))}
         </TableBody>
       </Table>
     </TableContainer>

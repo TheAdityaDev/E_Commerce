@@ -17,8 +17,14 @@ import {
   Select,
   IconButton,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DeleteForeverOutlined, Edit, X } from "@mui/icons-material";
+import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
+import {
+  deleteDeal,
+  getAllDeals,
+} from "../../Redux Toolkit/Features/Admin/dealSlice";
+import secureLocalStorage from "react-secure-storage";
 
 /* -------------------- Styled Components -------------------- */
 
@@ -48,31 +54,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-/* -------------------- Dummy Data -------------------- */
-
-function createData(
-  id,
-  sellerName,
-  email,
-  mobile,
-  gstin,
-  businessName,
-  accountStatus,
-) {
-  return { id, sellerName, email, mobile, gstin, businessName, accountStatus };
-}
-
-const rows = [
-  createData(
-    1,
-    "John Traders",
-    "john@email.com",
-    "https://media.istockphoto.com/id/973481674/photo/stylish-man-posing-on-grey-background.jpg?s=2048x2048&w=is&k=20&c=kd0X3EwcoMRCXtgyyVLmuMuWvZe5d7MewThg2ebgwW4=",
-    "9876543210",
-    "30%",
-  ),
-];
-
 const accountStatus = [
   { status: "PENDING_VERIFICATION", title: "Pending Verification" },
   { status: "ACTIVE", title: "Active" },
@@ -84,13 +65,24 @@ const accountStatus = [
 
 /* -------------------- Component -------------------- */
 
-const DealTable = ({ image }) => {
+const DealTable = () => {
+  const dispatch = useAppDispatch();
+  const deals = useAppSelector((state) => state?.deal);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("");
-  const [showImage, setShowImage] = useState(false);
 
   const open = Boolean(anchorEl);
+
+  const token = secureLocalStorage.getItem("token");
+  useEffect(() => {
+    if (!token ) {
+      throw new Error("Something went wrong try again..");
+      
+    }
+    dispatch(getAllDeals(token));
+    console.log(secureLocalStorage.getItem("token"))
+  }, [dispatch,token]);
 
   const handleMenuClick = (event, rowId) => {
     setAnchorEl(event.currentTarget);
@@ -107,30 +99,20 @@ const DealTable = ({ image }) => {
     handleClose();
   };
 
-  const filteredRows =
-    filterStatus === ""
-      ? rows
-      : rows.filter((row) => row.accountStatus === filterStatus);
+  const handelDelete = (id) => {
+    dispatch(deleteDeal({ id, token: secureLocalStorage.getItem("token") }));
+  };
+
+  const filteredRows = () => {
+    return filterStatus === ""
+      ? deals
+      : deals?.filter((row) => row.accountStatus === filterStatus);
+  };
 
   return (
     <>
-      {/* FULL SCREEN IMAGE MODAL */}
-      {showImage && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <button
-            onClick={() => setShowImage(false)}
-            className="absolute top-5 right-5 text-white bg-gray-700/50 p-2 rounded-full hover:bg-gray-600 transition"
-          >
-            <X size={28} />
-          </button>
 
-          <img
-            className="max-h-[90vh] max-w-full rounded-xl object-contain"
-            src={image}
-            alt="Product"
-          />
-        </div>
-      )}
+
       <div style={{ padding: "16px" }}>
         {/* -------------------- Table Section -------------------- */}
         <TableContainer
@@ -144,12 +126,12 @@ const DealTable = ({ image }) => {
           <Table
             sx={{
               minWidth: 800,
+              maxWidth: "100%",
             }}
           >
             <TableHead>
               <TableRow>
                 <StyledTableCell align="center">Sr.No</StyledTableCell>
-                <StyledTableCell align="center">Image</StyledTableCell>
                 <StyledTableCell align="center">Category</StyledTableCell>
                 <StyledTableCell align="center">Discount</StyledTableCell>
                 <StyledTableCell align="center">Edit</StyledTableCell>
@@ -158,33 +140,31 @@ const DealTable = ({ image }) => {
             </TableHead>
 
             <TableBody>
-              {filteredRows.map((row) => (
-                <StyledTableRow key={row.id}>
+              {filteredRows()?.deals?.map((item, index) => (
+                <StyledTableRow key={item._id}>
+                  {/* Sr No */}
+                  <StyledTableCell align="center">{index + 1}</StyledTableCell>
+
+                  {/* Category */}
                   <StyledTableCell align="center">
-                    {row.sellerName}
+                    {item.category?.name || "N/A"}
                   </StyledTableCell>
 
-                  <StyledTableCell>
-                   <img
-                      onClick={() => setShowImage(true)}
-                      src={image}
-                      className="w-30 h-20 lg:ml-35 sm:ml-25 rounded-md justify-center object-cover cursor-pointer hover:scale-110"
-                      alt=""
-                    />
-                  </StyledTableCell>
-
-                  <StyledTableCell align="center">{row.gstin}</StyledTableCell>
-
+                  {/* Discount */}
                   <StyledTableCell align="center">
-                    {row.businessName}
+                    {item.discount}%
                   </StyledTableCell>
+
+                  {/* Edit */}
                   <StyledTableCell align="center">
                     <IconButton>
                       <Edit color="primary" />
                     </IconButton>
                   </StyledTableCell>
+
+                  {/* Delete */}
                   <StyledTableCell align="center">
-                    <IconButton>
+                    <IconButton onClick={() => handelDelete(item._id)}>
                       <DeleteForeverOutlined color="error" />
                     </IconButton>
                   </StyledTableCell>

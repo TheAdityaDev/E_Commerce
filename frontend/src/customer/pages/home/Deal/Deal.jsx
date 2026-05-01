@@ -1,48 +1,53 @@
 import React, { useState, useEffect, useRef } from "react";
 import DealCard from "./DealCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-const dealsData = [
-  {
-    image:
-      "https://suvidhafashion.com/cdn/shop/files/BN71691-23995.jpg?v=1701166932&width=500",
-    name: "Fashion Deal 1",
-    discount: "20",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1717730798581-0061672774e9?w=600",
-    name: "Fashion Deal 2",
-    discount: "20",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1698108223397-3d222e80d7ea?w=600",
-    name: "Fashion Deal 3",
-    discount: "30",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1612444530582-fc66183b16f7?w=600",
-    name: "Fashion Deal 4",
-    discount: "20",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1628917749170-f6747418ffce?w=600",
-    name: "Fashion Deal 5",
-    discount: "20",
-  },
-  {
-    image:
-      "https://suvidhafashion.com/cdn/shop/files/BN71691-23995.jpg?v=1701166932&width=500",
-    name: "Fashion Deal 6",
-    discount: "20",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
-    name: "Fashion Deal 7",
-    discount: "15",
-  },
-];
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../../../Redux Toolkit/store";
+import {
+  fetchDeals,
+} from "../../../../Redux Toolkit/Features/Admin/dealSlice";
+import secureLocalStorage from "react-secure-storage";
 
 const Deal = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const token = secureLocalStorage.getItem("token");
+    if (token) {
+      dispatch(fetchDeals(token));
+    }
+  }, [dispatch]);
+
+  // Fetch deals from Redux store
+  const { deals, loading, error } = useAppSelector((store) => store.deal);
+
+  // Log errors for debugging
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching deals:", error);
+    }
+  }, [error]);
+
+  // Transform Redux deals to match DealCard format
+  // Handle both array and object responses from backend
+  const dealsArray = Array.isArray(deals?.deals)
+    ? deals.deals
+    : Array.isArray(deals)
+    ? deals
+    : [];
+
+  const dealsData = dealsArray.map((deal) => ({
+    image: deal.productImage || deal.image,
+    name: deal.productName || deal.name,
+    discount: deal.discountPercentage?.toString() || "0",
+    id: deal._id || deal.id,
+    productId: deal.product?._id || deal.productId
+  }));
+
   const [index, setIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const [visibleCards, setVisibleCards] = useState(4);
 
   const touchStartX = useRef(0);
@@ -91,8 +96,8 @@ const Deal = () => {
     // If the user started on a button/icon, don't treat it as a swipe.
     touchStartedOnInteractive.current = Boolean(
       e.target?.closest?.(
-        "button, a, input, textarea, select, option, [role='button']"
-      )
+        "button, a, input, textarea, select, option, [role='button']",
+      ),
     );
   };
 
@@ -112,9 +117,25 @@ const Deal = () => {
     if (Math.abs(dx) < 50) return;
     if (Math.abs(dy) > Math.abs(dx)) return;
 
-    if (dx > 0) next(); // Swipe Left
+    if (dx > 0)
+      next(); // Swipe Left
     else prev(); // Swipe Right
   };
+
+  const handleMouseMove = (e) => {
+    if (window.innerWidth < 1024) return; // Only for desktop
+    const { clientX } = e;
+    const { innerWidth } = window;
+    const threshold = innerWidth * 0.15; // 15% from edges
+
+    if (clientX < threshold) {
+      prev();
+    } else if (clientX > innerWidth - threshold) {
+      next();
+    }
+  };
+
+  console.log("Deal data:",dealsData)
 
   return (
     <div className="relative w-full py-10">
@@ -140,42 +161,70 @@ const Deal = () => {
         <ChevronRight size={28} />
       </button>
 
-      {/* VIEWPORT */}
-      <div
-        className="overflow-hidden w-full"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          className="flex transition-transform duration-500 ease-in-out"
-          style={{
-            transform: `translateX(-${index * (100 / visibleCards)}%)`,
-          }}
-        >
-          {dealsData.map((deal, i) => (
-            <div
-              key={i}
-              className="flex justify-center shrink-0"
-              style={{ width: `${100 / visibleCards}%` }}
-            >
-              <DealCard deal={deal} />
-            </div>
-          ))}
+      {/* LOADING STATE */}
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500">Loading deals...</p>
         </div>
-      </div>
+      )}
+
+      {/* ERROR STATE */}
+      {error && !loading && (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-red-500">Error loading deals: {error}</p>
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && !error && dealsData.length === 0 && (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500">No deals available</p>
+        </div>
+      )}
+
+      {/* VIEWPORT */}
+      {!loading && dealsData.length > 0 && (
+        <div
+          className="overflow-hidden w-full"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{
+              transform: `translateX(-${index * (100 / visibleCards)}%)`,
+            }}
+          >
+            {dealsData.map((deal) => (
+              <div
+                key={deal._id || deal.id}
+                className="flex justify-center shrink-0"
+                style={{ width: `${100 / visibleCards}%` }}
+              >
+                <DealCard deal={deal} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* PAGINATION DOTS */}
-      <div className="flex justify-center gap-2 mt-6">
-        {Array.from({ length: maxIndex + 1 }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIndex(i)}
-            className={`h-2 rounded-full transition-all duration-300
-            ${i === index ? "w-8 bg-blue-600" : "w-2 bg-gray-400"}`}
-          />
-        ))}
-      </div>
+      {!loading && dealsData.length > 0 && (
+        <div className="flex justify-center gap-2 mt-6">
+          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`h-2 rounded-full transition-all duration-300
+              ${i === index ? "w-8 bg-blue-600" : "w-2 bg-gray-400"}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

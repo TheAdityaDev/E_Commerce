@@ -55,13 +55,7 @@ const SignupForm = () => {
 
     onSubmit: (values) => {
       dispatch(signup({ ...values, navigate }))
-        .then(() => {
-          toast.success("Signup successful! 🎉");
-        })
-        .catch(() => {
-          // Always generic message for security
-          toast.error("Invalid credentials ❌");
-        });
+      .unwrap()
     },
   });
 
@@ -89,8 +83,6 @@ const SignupForm = () => {
 
     dispatch(sendLoginSignUpOtp(email))
       .unwrap()
-      .then(() => toast.success("OTP sent successfully! ✅"))
-      .catch((err) => toast.error(err?.message || "Failed to send OTP ❌"));
   };
 
   // ─── Step 0b: Verify OTP → go to Step 1 ─────────────────

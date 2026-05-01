@@ -5,24 +5,28 @@ const abortSignal = require("../api/abort.api");
 const sellerMiddleware = require("../middleware/sellerAuth.middleware");
 const productController = require("../controller/product.controller");
 
-
 router.get(
   "/",
   sellerMiddleware,
   rateLimitRoute,
   abortSignal(3000),
-  productController.getAllProducts
+  productController.getProductBySeller,
 );
 
-router.post('/',sellerMiddleware,rateLimitRoute,abortSignal(3000),productController.createProduct)
-
+router.post(
+  "/",
+  sellerMiddleware,
+  rateLimitRoute,
+  abortSignal(3000),
+  productController.createProduct,
+);
 
 router.delete(
   "/:productId",
   sellerMiddleware,
   rateLimitRoute,
   abortSignal(3000),
-  productController.deleteProduct
+  productController.deleteProduct,
 );
 
 router.patch(
@@ -30,7 +34,17 @@ router.patch(
   sellerMiddleware,
   rateLimitRoute,
   abortSignal(3000),
-  productController.updateProduct
+  productController.updateProduct,
 );
 
-module.exports = router
+router.get(
+  "/filter",
+  rateLimitRoute,
+  abortSignal(3000),
+  productController.getAllProducts,
+);
+
+
+
+
+module.exports = router;

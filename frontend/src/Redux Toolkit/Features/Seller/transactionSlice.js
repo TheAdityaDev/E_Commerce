@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { axiosInstance } from "../../../config/api.config";
 
-const API_URL = "/transaction"
+const API_URL = "/transactions"
 
 const initialState = {
     transaction:[],
@@ -20,11 +20,32 @@ export const fetchTransactionBySeller = createAsyncThunk(
                     }
                 }
             )
-            console.log("seller profile", response.data);
+            console.log("seller transaction", response.data);
             
             return response.data
         } catch (error) {
             return rejectWithValue(error.response?.data || "Failed to fetch profile")
+        }
+    }
+)
+
+export const fetchTransactionByUser = createAsyncThunk(
+    "/transaction/fetchTransactionByUser",
+    async (arg, { rejectWithValue }) => {
+        try {
+            const token = typeof arg === "string" ? arg : arg?.token;
+            if (!token) {
+                return rejectWithValue("Missing auth token");
+            }
+            const response = await axiosInstance.get(`${API_URL}/user`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = response.data;
+            return Array.isArray(data) ? data : data?.transactions ?? [];
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Failed to fetch transactions");
         }
     }
 )
@@ -36,13 +57,27 @@ const transactionSlice = createSlice({
     extraReducers:(builder)=>{
         builder.addCase(fetchTransactionBySeller.fulfilled,(state , action)=>{
             state.loading = false
-            state.transaction = action.payload
+            const payload = action.payload
+            state.transaction = Array.isArray(payload) ? payload : []
         })
         .addCase(fetchTransactionBySeller.rejected,(state , action)=>{
             state.loading = false
             state.error = action.error.message
         })
         .addCase(fetchTransactionBySeller.pending,(state)=>{
+            state.error = null
+            state.loading = true
+        })
+        .addCase(fetchTransactionByUser.fulfilled,(state , action)=>{
+            state.loading = false
+            const payload = action.payload
+            state.transaction = Array.isArray(payload) ? payload : []
+        })
+        .addCase(fetchTransactionByUser.rejected,(state , action)=>{
+            state.loading = false
+            state.error = action.error.message
+        })
+        .addCase(fetchTransactionByUser.pending,(state)=>{
             state.error = null
             state.loading = true
         })

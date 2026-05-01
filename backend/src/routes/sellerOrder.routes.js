@@ -15,7 +15,7 @@ router.get(
 );
 
 router.patch(
-  "/:orderId/products/:orderStatus",
+  "/:orderId/status/:orderStatus",
   rateLimitRoute,
   sellerMiddleware,
   abortSignal(3000), // ✅ now this is a function

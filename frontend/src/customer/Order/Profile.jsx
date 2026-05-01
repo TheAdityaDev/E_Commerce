@@ -1,34 +1,63 @@
 import { Divider } from "@mui/material";
-import OrderDetail from "./OrderDetail";
+import { lazy, Suspense } from "react";
+const OrderDetail = lazy(() => import("./OrderDetail"));
+const UserDetail = lazy(() => import("../pages/account/UserDetail"));
+const Order = lazy(() => import("./Order"));
+const Address = lazy(() => import("./Address"));
+const Transactions = lazy(() => import("./TransactionHistory"));
+const AllPosts = lazy(() => import("./AllPosts"));
+
 import { Route, Routes, useNavigate } from "react-router-dom";
-import UserDetail from "../pages/account/UserDetail";
-import Order from "./Order";
 import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
 import { performedLogout } from "../../Redux Toolkit/Features/Auth/AuthSlice";
 import { toast } from "react-toastify";
-import { User , ShoppingCart , CreditCard , MapPinPlus , LogOut } from "lucide-react";
+import {
+  User,
+  ShoppingCart,
+  CreditCard,
+  MapPinPlus,
+  LogOut,
+  MessageCircleMoreIcon,
+} from "lucide-react";
+import { PostAddOutlined } from "@mui/icons-material";
 
 const menu = [
-  { icons:<User className="size-4.5" /> , name: "profile", path: "/account" },
-  { icons:<ShoppingCart className="size-4.5" />, name: "orders", path: "/account/orders" },
-  { icons:<CreditCard className="size-4.5" /> , name: "saved Cards", path: "/account/saved-cards" },
-  { icons:<MapPinPlus className="size-4.5" /> , name: "newAddress", path: "/account/new-address" },
-  { icons:<LogOut className="size-4.5" /> , name: "logout", path: "/" },
+  { icons: <User className="size-4.5" />, name: "profile", path: "/account" },
+  {
+    icons: <ShoppingCart className="size-4.5" />,
+    name: "orders",
+    path: "/account/orders",
+  },
+  {
+    icons: <CreditCard className="size-4.5" />,
+    name: "Transactions",
+    path: "/account/transactions",
+  },
+  {
+    icons: <MapPinPlus className="size-4.5" />,
+    name: "newAddress",
+    path: "/account/new-address",
+  },
+  {
+    icons: <MessageCircleMoreIcon className="size-4.5" />,
+    name: "Posts",
+    path: "/account/all/posts",
+  },
+  { icons: <LogOut className="size-4.5" />, name: "logout", path: "/" },
 ];
 
 const Profile = () => {
-  const { user } = useAppSelector((state) => state);
+  const { user } = useAppSelector((state) => state.user.user || {});
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handelLogout = async () => {
     await dispatch(performedLogout());
-  
+
     toast.success("Logout Successfully");
     navigate("/auth/login");
   };
 
-  
   const handelClick = (item) => {
     if (item.name === "logout") {
       handelLogout();
@@ -36,14 +65,13 @@ const Profile = () => {
     navigate(item.path);
   };
 
-
   return (
     <div className="px-5 lg:px-52 min-h-screen mt-10">
       <div>
         <h1 className="text-xl font-bold pb-5 flex items-center gap-2">
           👋 Hello,
           <p className="bg-gradient-to-r text-2xl from-teal-400 to-blue-700 bg-clip-text text-transparent">
-            {user.user?.name}
+            {user?.name}
           </p>
         </h1>
         <Divider />
@@ -56,6 +84,8 @@ const Profile = () => {
           gap-3 
           overflow-x-auto lg:overflow-visible mt-10
           pb-3 lg:pb-0
+           lg:sticky lg:top-40   /* 👈 Sticky magic */
+        lg:h-fit             /* 👈 prevents stretch */
           "
             >
               {menu.map((item) => {
@@ -64,7 +94,7 @@ const Profile = () => {
                 return (
                   <button
                     key={item.name}
-                    onClick={() =>handelClick(item)}
+                    onClick={() => handelClick(item)}
                     className={`
                   whitespace-nowrap
                   cursor-pointer
@@ -98,17 +128,22 @@ const Profile = () => {
             />
           </div>
           <div className="lg:col-span-2 lg:pl-5 py-5">
-            <Routes>
-              <Route index element={<UserDetail />} />
-              <Route path="orders" element={<Order />} />
-              <Route
-                path="orders/:orderId/item/:orderItemId"
-                element={<OrderDetail />}
-              />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                <Route index element={<UserDetail />} />
+                <Route path="orders" element={<Order />} />
+                <Route
+                  path="/orders/:orderId/item/:orderItemId"
+                  element={<OrderDetail />}
+                />
+                <Route path="/new-address" element={<Address />} />
+                <Route path="transactions" element={<Transactions />} />
+                <Route path="/all/posts" element={<AllPosts />} />
 
-              {/* Optional: 404 */}
-              <Route path="*" element={<h1>Page Not Found</h1>} />
-            </Routes>
+                {/* Optional: 404 */}
+                <Route path="*" element={<h1>Page Not Found</h1>} />
+              </Routes>
+            </Suspense>
           </div>
         </div>
       </div>

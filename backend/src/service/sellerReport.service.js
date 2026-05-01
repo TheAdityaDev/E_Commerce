@@ -2,12 +2,16 @@ const sellerReportModel = require("../model/sellerReport.model");
 
 class sellerReportService {
   async getSellerReport(seller) {
-    let sellerReport = await sellerReportModel.findOne({ seller: seller._id });
-    console.log("Seller Report ==>", sellerReport);
+    const sellerId = seller?._id || seller;
+    if (!sellerId) {
+      throw new Error("Seller id is required to get seller report");
+    }
+
+    let sellerReport = await sellerReportModel.findOne({ seller: sellerId });
 
     if (!sellerReport) {
       sellerReport = await sellerReportModel.create({
-        seller: seller._id,
+        seller: sellerId,
         totalEarnings: 0,
         totalSales: 0,
         totalRefunds: 0,
@@ -24,10 +28,10 @@ class sellerReportService {
   async updateSellerReport(sellerReport) {
     try {
       return await sellerReportModel.findOneAndUpdate(
-        sellerReport._id,
+        { _id: sellerReport._id },
         sellerReport,
         {
-          new: true,
+          returnDocument: "after",
         }
       );
     } catch (error) {

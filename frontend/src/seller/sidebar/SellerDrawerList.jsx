@@ -12,6 +12,8 @@ import {
 } from "@mui/icons-material";
 import React from "react";
 import { useLocation, useNavigate } from "react-router";
+import { useAppDispatch } from "../../Redux Toolkit/store";
+import { performedLogout } from "../../Redux Toolkit/Features/Auth/AuthSlice";
 
 const menu = [
   {
@@ -71,17 +73,20 @@ const SellerDrawerList = ({ toggleDrawer }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handelLogout = () => {
-    console.log("handel logout");
-  };
+  const dispatch = useAppDispatch()
+
+  const handelLogout = async () => {
+        await dispatch(performedLogout());
+        navigate("/become-seller");
+      };
   const handelClick = (item) => {
     if (item.name === "Logout") {
-      // localStorage.clear();
       handelLogout();
     }
 
     navigate(item.path);
-    // if(toggleDrawer)toggleDrawer(false)();
+
+    
   };
   return (
     <div className="h-full">

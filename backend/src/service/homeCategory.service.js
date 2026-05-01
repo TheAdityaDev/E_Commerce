@@ -3,7 +3,7 @@ const homeCategoryModel = require("../model/homeCategory.model");
 class HomeCategoryService {
   async getAllHomeCategory() {
     try {
-      return await homeCategoryModel.find();
+      return await homeCategoryModel.find().select("-__v -createdAt -updatedAt");
     } catch (error) {
       throw new Error(error.message);
     }
@@ -19,10 +19,17 @@ class HomeCategoryService {
   }
 
   async createCategories(req) {
-    const existingCategories = await homeCategoryModel.find();
+    try {
+      // Ensure req is an array
+      const categoriesToInsert = Array.isArray(req) ? req : [req];
 
-    if (existingCategories.length === 0) {
-      return await homeCategoryModel.insertMany(req);
+      // Delete existing categories and insert new ones
+      await homeCategoryModel.deleteMany({});
+      const insertedCategories = await homeCategoryModel.insertMany(categoriesToInsert);
+      
+      return insertedCategories;
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
@@ -36,7 +43,7 @@ class HomeCategoryService {
 
 
   /* req= category */
-  async updateHomeCategory(id, req) {
+  async updateHomeCategory(req, id) {
     try {
 
         const existingCategory = await homeCategoryModel.findById(id);
@@ -45,8 +52,8 @@ class HomeCategoryService {
           throw new Error("Category not found");
         }
 
-      return await homeCategoryModel.findByIdAndUpdate(existingCategory._id, {
-        new: true,
+      return await homeCategoryModel.findByIdAndUpdate(existingCategory._id, req, {
+        returnDocument : "after",
       });
     } catch (error) {
       throw new Error(error.message);

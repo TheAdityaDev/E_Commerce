@@ -7,7 +7,7 @@ import productReducer from "./Features/Customer/productSlice";
 import orderReducer from "./Features/Customer/orderSlice";
 import cartReducer from "./Features/Customer/cartSlice"
 import couponReducer from "./Features/Customer/couponSlice"
-import homeReducer from "./Features/Customer/HomeCategorySlice"
+import homeCategoryReducer from "./Features/Customer/HomeCategorySlice"
 import sellerAuthReducer from "./Features/Seller/sellerAuthentication";
 import sellerOrderReducer from "./Features/Seller/sellerOrderSlice";
 import sellerProductReducer from "./Features/Seller/sellerProductSlice";
@@ -16,6 +16,7 @@ import transactionReducer from "./Features/Seller/transactionSlice";
 import adminReducer from "./Features/Admin/adminSlice";
 import dealReducer from "./Features/Admin/dealSlice";
 import adminCouponReducer from "./Features/Admin/couponSlice";
+import postsReducer from "./Features/Customer/postsSlice"
 
 
 
@@ -26,7 +27,8 @@ const rootReducer = combineReducers({
   orders:orderReducer,
   cart:cartReducer,
   coupon:couponReducer,
-  home:homeReducer,
+  homeCategory:homeCategoryReducer,
+  posts:postsReducer,
 
   // Seller Reducers
   sellerAuth: sellerAuthReducer,

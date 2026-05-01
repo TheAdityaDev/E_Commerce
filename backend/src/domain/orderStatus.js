@@ -5,7 +5,7 @@ const orderStatus = Object.freeze({
     CONFIRM:"Confirm",
     SHIPPED:"Shipped",
     DELIVERED:"Delivered",
-    CANCELLED:"Cancelled"
+    CANCELLED:"Cancelled",
 })
 
 module.exports = orderStatus;

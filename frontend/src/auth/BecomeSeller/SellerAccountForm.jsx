@@ -26,11 +26,8 @@ const SellerAccountForm = () => {
   const formik = useFormik({
     initialValues: {
       mobile: "",
-      otp: "",
       GSTIN: "",
-      pickupAddress: {
-        name: "",
-        mobile: "",
+      pickupDetails: {
         address: "",
         locality: "",
         city: "",
@@ -41,16 +38,15 @@ const SellerAccountForm = () => {
       bankDetails: {
         accountHolderName: "",
         accountNumber: "",
-        ifscCode: "",
+        IFSC_Code: "",
+        bankName: "",
       },
       sellerName: "",
       email: "",
       businessDetails: {
         businessName: "",
         businessEmail: "",
-        businessMobile: "",
-        logo: "",
-        banner: "",
+        businessPhone: "",
         businessAddress: "",
       },
       password: "",
@@ -64,9 +60,8 @@ const SellerAccountForm = () => {
 
       dispatch(createSeller({ ...values, navigate }))
       .then(() => {
-        navigate("/seller")
         console.log(values)
-        toast.success("Signup successful 🎉");
+        navigate("/seller")
       })
       .catch(() => {
         toast.error("Invalid credentials ❌");
@@ -76,7 +71,7 @@ const SellerAccountForm = () => {
 
 
   return (
-    <div className="">
+    <div>
       <Stepper activeStep={activeStep} alternativeLabel>
         {steps.map((label) => (
           <Step key={label} className="mt-10">

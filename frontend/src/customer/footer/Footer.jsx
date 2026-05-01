@@ -138,7 +138,7 @@ const Footer = () => {
             {/* Custom Button ON TOP of iframe */}
             <button
               onClick={() => setIsOpen(true)}
-              className="absolute bottom-6 right-2 bg-teal-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-teal-600 transition"
+              className="absolute bottom-6 right-2 bg-teal-500 text-white px-4 py-2 rounded-lg cursor-help shadow-lg hover:bg-teal-600 transition"
             >
               <ZoomInMap />
             </button>

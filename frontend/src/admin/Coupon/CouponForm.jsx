@@ -14,6 +14,9 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import { Add } from "@mui/icons-material";
+import { useAppDispatch } from "../../Redux Toolkit/store";
+import { createCoupon } from "../../Redux Toolkit/Features/Admin/couponSlice";
+import secureLocalStorage from "react-secure-storage";
 /* ---------------- Random Code Generator ---------------- */
 
 function generateRandomKeyword(length = 12) {
@@ -41,6 +44,7 @@ function generateRandomKeyword(length = 12) {
 /* ---------------- Component ---------------- */
 
 const CouponForm = () => {
+  const dispatch = useAppDispatch()
   const formik = useFormik({
     initialValues: {
       code: "",
@@ -51,9 +55,12 @@ const CouponForm = () => {
       validDays: "",
     },
     onSubmit: (values) => {
-      console.log(values);
+      dispatch(createCoupon({values , token:secureLocalStorage.getItem("token")}))
+      formik.resetForm();
     },
   });
+
+
 
   useEffect(() => {
     const start = formik.values.validityStartDate;
@@ -74,10 +81,10 @@ const CouponForm = () => {
   };
 
   return (
-    <main classNameName="max-w-3xl flex justify-self-center items-center rounded-full lg:mt-10">
-      <section classNameName="w-full max-w-3xl">
+    <main className="max-w-3xl flex justify-self-center items-center rounded-full lg:mt-10">
+      <section className="w-full max-w-3xl">
         <Paper elevation={3} sx={{ p: { xs: 3, sm: 4 } }}>
-          <header classNameName="mb-6">
+          <header className="mb-6">
             <Typography variant="h5" fontWeight="bold" className="pb-5">
               Create Coupon
             </Typography>

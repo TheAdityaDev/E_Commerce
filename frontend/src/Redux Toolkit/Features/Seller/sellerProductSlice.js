@@ -1,26 +1,31 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../../config/api.config";
+import { toast } from "react-toastify";
 
 const API_URL = "/seller/products";
 
 export const fetchSellerProduct = createAsyncThunk(
   "sellerOrder/fetchSellerProduct",
-  async (token, { rejectWithValue }) => {
+  async ( {token}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`${API_URL}`, {
+      const response = await axiosInstance.get(API_URL, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("seller products", response.data);
+
+      if (response.status === 200) {
+        toast.success(response.data.message);
+      }
 
       return response.data;
     } catch (error) {
+      toast.error(error.response.data.message);
       return rejectWithValue(
-        error.response?.data || "Failed to fetch products",
+        error.response?.data || "Failed to fetch products"
       );
     }
-  },
+  }
 );
 
 export const createProduct = createAsyncThunk(
@@ -32,7 +37,10 @@ export const createProduct = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("create product", response.data);
+
+      if (response.status === 201) {
+        toast.success("Product create successfully")
+      }
 
       return response.data;
     } catch (error) {
@@ -83,7 +91,8 @@ const sellerProductSlice = createSlice({
       })
       .addCase(fetchSellerProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload;
+        // Extract content array from the response
+        state.products = action.payload.content || action.payload.products || action.payload;
       })
       .addCase(fetchSellerProduct.rejected, (state, action) => {
         state.loading = false;
@@ -125,5 +134,4 @@ const sellerProductSlice = createSlice({
   },
 });
 
-
-export default sellerProductSlice.reducer 
+export default sellerProductSlice.reducer;

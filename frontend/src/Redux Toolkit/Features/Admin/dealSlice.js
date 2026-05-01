@@ -10,14 +10,27 @@ const initialState = {
 };
 
 export const createDeal = createAsyncThunk(
-  "/deal/createSlice",
-  async ({ token, deal }, { rejectWithValue }) => {
+  "/deal/createDeal",
+  async ({ token, deal }, { rejectWithValue, signal }) => {
     try {
       const response = await axiosInstance.post(`${API_URL}/deals`, deal, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        signal,
+        timeout: 10000,
       });
+
+      console.log("Slice:", deal);
+      console.log("Created Deal:", response.data);
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(error.response?.data || "Failed to create deal");
     }
   },
@@ -25,13 +38,21 @@ export const createDeal = createAsyncThunk(
 
 export const fetchDeals = createAsyncThunk(
   "/deal/fetchDeals",
-  async (token, { rejectWithValue }) => {
+  async (token, { rejectWithValue, signal }) => {
     try {
-      const response = await axiosInstance.get(`/deals`, {
+      console.log("Token:", token);
+      const response = await axiosInstance.get(`${API_URL}/deals`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
+        timeout: 10000,
       });
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(error.response?.data || "Failed to fetch deals");
     }
   },
@@ -39,13 +60,20 @@ export const fetchDeals = createAsyncThunk(
 
 export const getAllDeals = createAsyncThunk(
   "/deal/getAllDeals",
-  async (token, { rejectWithValue }) => {
+  async (token, { rejectWithValue, signal }) => {
     try {
       const response = await axiosInstance.get(`${API_URL}/deals`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
+        timeout: 10000,
       });
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(error.response?.data || "Failed to fetch deals");
     }
   },
@@ -53,35 +81,45 @@ export const getAllDeals = createAsyncThunk(
 
 export const deleteDeal = createAsyncThunk(
   "/deal/deleteDeal",
-  async ({id , token}, { rejectWithValue }) => {
+  async ({ id, token }, { rejectWithValue, signal }) => {
     try {
-      const response = await axiosInstance.delete(`${API_URL}/deals/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.delete(`${API_URL}/deals/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+        timeout: 10000,
+      });
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(error.response?.data || "Failed to delete deal");
     }
   },
-)
+);
 
 export const updateDeal = createAsyncThunk(
   "/deal/updateDeal",
-  async ({id , token, deal}, { rejectWithValue }) => {
+  async ({ id, token, deal }, { rejectWithValue, signal }) => {
     try {
-      const response = await axiosInstance.put(`${API_URL}/deals/${id}`, deal,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.put(`${API_URL}/deals/${id}`, deal, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+        timeout: 10000,
+      });
+
       return response.data;
     } catch (error) {
+      if (error.code === "ERR_CANCELED") {
+        return rejectWithValue("Request canceled");
+      }
+
       return rejectWithValue(error.response?.data || "Failed to update deal");
     }
-  }, 
-)
+  },
+);
 
 const dealSlice = createSlice({
   name: "deal",
@@ -137,7 +175,9 @@ const dealSlice = createSlice({
       })
       .addCase(deleteDeal.fulfilled, (state, action) => {
         state.loading = false;
-        state.deals = state.deals.filter((deal) => deal._id !== action.payload._id);
+        state.deals = state.deals.filter(
+          (deal) => deal._id !== action.payload._id,
+        );
       })
       .addCase(deleteDeal.rejected, (state, action) => {
         state.loading = false;
@@ -151,7 +191,9 @@ const dealSlice = createSlice({
       })
       .addCase(updateDeal.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.deals.findIndex((deal) => deal._id === action.payload._id);
+        const index = state.deals.findIndex(
+          (deal) => deal._id === action.payload._id,
+        );
         if (index !== -1) {
           state.deals[index] = action.payload;
         }
@@ -162,5 +204,5 @@ const dealSlice = createSlice({
       });
   },
 });
-    
-export default dealSlice.reducer
+
+export default dealSlice.reducer;
