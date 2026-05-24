@@ -5,28 +5,25 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   server: {
-    host: "127.0.0.1",
+    host: true,
     port: 5173,
-    strictPort: false,
-    watch: { usePolling: true },
-    hmr: {
-      protocol: "ws",
-      host: "127.0.0.1",
-      port: 5173
-    }
   },
+
   plugins: [
     react(),
     tailwindcss(),
+
     VitePWA({
-      registerType: "autoUpdate", // 👈 auto update SW
-      includeAssets: ["favicon.svg", "robots.txt"], // optional
-      historyApiFallback: true,
+      registerType: "autoUpdate",
+
+      includeAssets: ["favicon.svg", "robots.txt"],
+
       manifest: {
         name: "My App",
         short_name: "App",
         description: "My Vite + React PWA",
         theme_color: "#ffffff",
+
         icons: [
           {
             src: "pwa-192x192.png",
@@ -40,19 +37,23 @@ export default defineConfig({
           },
         ],
       },
+
       workbox: {
         runtimeCaching: [
           {
             urlPattern: ({ request }) =>
-              request.destination === "document" ||
-              request.destination === "script" ||
-              request.destination === "style",
-            handler: "NetworkFirst", // 👈 online-first, fallback to cache
+              ["document", "script", "style"].includes(
+                request.destination
+              ),
+
+            handler: "NetworkFirst",
+
             options: {
               cacheName: "assets-cache",
+
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
             },
           },
