@@ -12,6 +12,7 @@ const initialState = {
   searchProduct: [],
   totalElements: 0,
   totalPages: 0,
+  productsCache: {},
 };
 
 export const fetchProductById = createAsyncThunk(
@@ -79,7 +80,7 @@ export const getAllProducts = createAsyncThunk(
         timeout: 10000,
       });
 
-      return response.data;
+      return { data: response.data, cacheKey: params.cacheKey };
     } catch (error) {
       if (error.code === "ERR_CANCELED") {
         return rejectWithValue("Request canceled");
@@ -175,14 +176,15 @@ const productSlice = createSlice({
       .addCase(filterProducts.fulfilled, (state, action) => {
         state.loading = false;
 
-        const payload = action.payload || {};
-
-        state.products = payload.content || [];
-        state.totalElements = payload.totalElements || 0;
-        state.totalPages = payload.totalPages || 0;
+        if (action.payload) {
+          state.products = action.payload.content || [];
+          state.totalElements = action.payload.totalElements || 0;
+          state.totalPages = action.payload.totalPages || 0;
+        }
       })
 
       .addCase(getAllProducts.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.error.message || "Failed to fetch product";
       })
 
@@ -194,11 +196,18 @@ const productSlice = createSlice({
       .addCase(getAllProducts.fulfilled, (state, action) => {
         state.loading = false;
 
-        const payload = action.payload || {};
+        if (action.payload) {
+          const payloadData = action.payload.data || action.payload;
+          const cacheKey = action.payload.cacheKey;
 
-        state.products = payload.content || [];
-        state.totalElements = payload.totalElements || 0;
-        state.totalPages = payload.totalPages || 0;
+          state.products = payloadData.content || [];
+          state.totalElements = payloadData.totalElements || 0;
+          state.totalPages = payloadData.totalPages || 0;
+
+          if (cacheKey) {
+            state.productsCache[cacheKey] = payloadData;
+          }
+        }
       })
 
       .addCase(filterProducts.rejected, (state, action) => {

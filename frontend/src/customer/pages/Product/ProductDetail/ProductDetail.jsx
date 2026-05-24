@@ -42,7 +42,6 @@ import {
   fetchPosts,
 } from "../../../../Redux Toolkit/Features/Customer/postsSlice";
 import { useMemo } from "react";
-import { TextField } from "@mui/material";
 import { uploadToCloudinary } from "../../../../util/uploadToCloudinary";
 import { logo } from "../../../json/common";
 
@@ -73,6 +72,50 @@ export function PostMediaGallery({ media }) {
   );
 
   if (!media || media.length === 0) return null;
+
+  const videoRef = useRef(null);
+
+const [isPlaying, setIsPlaying] = useState(false);
+const [isMuted, setIsMuted] = useState(false);
+const [progress, setProgress] = useState(0);
+
+const togglePlay = () => {
+  if (!videoRef.current) return;
+
+  if (videoRef.current.paused) {
+    videoRef.current.play();
+    setIsPlaying(true);
+  } else {
+    videoRef.current.pause();
+    setIsPlaying(false);
+  }
+};
+
+const toggleMute = () => {
+  if (!videoRef.current) return;
+
+  videoRef.current.muted = !videoRef.current.muted;
+  setIsMuted(videoRef.current.muted);
+};
+
+const handleTimeUpdate = () => {
+  if (!videoRef.current) return;
+
+  const value =
+    (videoRef.current.currentTime / videoRef.current.duration) * 100;
+
+  setProgress(value);
+};
+
+const handleZoom = () => {
+  if (!videoRef.current) return;
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    videoRef.current.requestFullscreen();
+  }
+};
 
   return (
     <div className="space-y-4">
@@ -161,7 +204,6 @@ const ProductDetail = () => {
   const [showPostModal, setShowPostModal] = useState(false);
 
   const token = secureLocalStorage.getItem("token");
-  console.log(token);
 
   const { product, error } = useAppSelector((store) => store.products);
   const { user } = useAppSelector((store) => store.user?.user || {});
@@ -931,11 +973,11 @@ const ProductDetail = () => {
                         <div className="flex justify-between items-start mb-8">
                           <div className="flex items-center gap-5">
                             <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 text-xl">
-                              {(post?.user?.name || "").charAt(0).toUpperCase()}
+                              {(post?.user?.name || user?.name || "U").charAt(0).toUpperCase()}
                             </div>
                             <div>
                               <h4 className="font-bold text-slate-900 text-lg">
-                                {post?.user?.name || "Anonymous"}
+                                {post?.user?.name || user?.name || "Anonymous"}
                               </h4>
                               <h5 className="font-black flex items-start gap-3 text-slate-900 text-lg uppercase tracking-tight">
                                 {post?.title}

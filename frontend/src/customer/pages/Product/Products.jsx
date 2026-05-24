@@ -15,53 +15,123 @@ const ProductCard = lazy(() => import("./ProductCard"));
 const FilterSection = lazy(() => import("./FilterSection"));
 
 const Products = () => {
-  const [sort, setSort] = useState("");
   const { categoryId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchParamString = searchParams.toString();
   const search = searchParams.get("search") || "";
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
   const sortParam = searchParams.get("sort") || "";
+  const [sort, setSort] = useState(sortParam);
   const page = searchParams.get("page") || 1;
 
   const dispatch = useAppDispatch();
 
   const [openDrawer, setOpenDrawer] = useState(false);
-  const { products, loading } = useAppSelector((store) => store.products);
+  const {
+    products,
+    loading,
+    totalElements,
+    productsCache = {},
+  } = useAppSelector((store) => store.products);
 
-  const filterOptions = useMemo(() => ({
-    category: categoryId,
-    search,
-    minPrice,
-    maxPrice,
-    sort: sortParam,
-    pageNumber: page,
-  }), [categoryId, search, minPrice, maxPrice, sortParam, page]);
+  const apiPage = Math.ceil(Number(page) / 2);
+
+  const handlePaginationChange = (event, value) => {
+    const currentParams = Object.fromEntries([...searchParams]);
+    setSearchParams({ ...currentParams, page: value });
+  };
+
+  const cacheKey = useMemo(() => {
+    return JSON.stringify({
+      categoryId,
+      search,
+      minPrice,
+      maxPrice,
+      sortParam,
+      apiPage,
+    });
+  }, [categoryId, search, minPrice, maxPrice, sortParam, apiPage]);
+
+  const apiFilterOptions = useMemo(
+    () => ({
+      category: categoryId,
+      search,
+      minPrice,
+      maxPrice,
+      sort: sortParam,
+      pageNumber: apiPage,
+      cacheKey,
+    }),
+    [categoryId, search, minPrice, maxPrice, sortParam, apiPage, cacheKey],
+  );
+
+  const debouncedFetchProducts = useMemo(() => {
+    let timeoutId;
+    return (options) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        dispatch(getAllProducts(options));
+      }, 500); // Debounce delay
+    };
+  }, [dispatch]);
+
+  const isCached = !!productsCache[cacheKey];
 
   useEffect(() => {
-    // Only fetch if products are empty or if the filter string has changed
-    // This prevents re-fetching when navigating back if the data is already present
-    const shouldFetch = products.length === 0 || searchParamString;
-    
-    if (shouldFetch) {
-      dispatch(getAllProducts(filterOptions));
+    if (!isCached) {
+      debouncedFetchProducts(apiFilterOptions);
     }
-  }, [dispatch, filterOptions, searchParamString]);
+  }, [debouncedFetchProducts, apiFilterOptions, isCached]);
 
-  const handleChange = (event) => {
-    setSort(event.target.value);
-    dispatch(
-      getAllProducts({
-        category: categoryId,
-        search,
-        minPrice,
-        maxPrice,
-        sort: event.target.value,
-        pageNumber: page,
-      }),
-    );
-  };
+const handleChange = (event) => {
+  const value = event.target.value;
+  setSort(value);
+
+  const currentParams = Object.fromEntries([...searchParams]);
+
+  if (value) {
+    setSearchParams({
+      ...currentParams,
+      sort: value,
+      page: 1,
+    });
+  } else {
+    delete currentParams.sort;
+
+    setSearchParams({
+      ...currentParams,
+      page: 1,
+    });
+  }
+};
+
+  const cachedData = productsCache[cacheKey];
+  const cachedProducts = cachedData ? cachedData.content || [] : products;
+  const currentTotalElements = cachedData
+    ? cachedData.totalElements || 0
+    : totalElements;
+
+  const displayedProducts = useMemo(() => {
+    const isOddPage = Number(page) % 2 !== 0;
+    return isOddPage ? cachedProducts.slice(0, 6) : cachedProducts.slice(6, 10);
+  }, [cachedProducts, page]);
+
+  const uiTotalPages = useMemo(() => {
+    if (currentTotalElements === 0) return 1;
+    const fullApiPages = Math.floor(currentTotalElements / 10);
+    const remainder = currentTotalElements % 10;
+
+    let pages = fullApiPages * 2;
+    if (remainder > 0) {
+      if (remainder <= 6) {
+        pages += 1;
+      } else {
+        pages += 2;
+      }
+    }
+    return pages;
+  }, [currentTotalElements]);
   return (
     <div className="-z-10 mt-10">
       <div>
@@ -115,12 +185,13 @@ const Products = () => {
             }
           >
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-9 mt-4 object-cover">
-              {loading && products.length === 0 ? (
+              {loading && displayedProducts.length === 0 ? (
                 <div className="flex justify-center items-center col-span-full h-[200px]">
                   Loading...
                 </div>
-              ) : Array.isArray(products) && products.length > 0 ? (
-                products.map((item) => (
+              ) : Array.isArray(displayedProducts) &&
+                displayedProducts.length > 0 ? (
+                displayedProducts.map((item) => (
                   <div key={item._id}>
                     <ProductCard item={item} />
                   </div>
@@ -138,7 +209,13 @@ const Products = () => {
             </div>
           </Suspense>
           <div className="flex justify-center mb-10">
-            <Pagination count={20} variant="outlined" shape="rounded" />
+            <Pagination
+              count={uiTotalPages || 1}
+              page={Number(page)}
+              onChange={handlePaginationChange}
+              variant="outlined"
+              shape="rounded"
+            />
           </div>
         </section>
       </div>
