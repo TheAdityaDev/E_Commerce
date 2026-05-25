@@ -101,5 +101,9 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome To Ram bazaar." });
 });
 
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // IMPORTANT: EXPORT APP FOR VERCEL
 module.exports = app;
