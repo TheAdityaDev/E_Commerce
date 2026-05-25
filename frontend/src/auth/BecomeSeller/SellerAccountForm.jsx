@@ -1,10 +1,20 @@
 import { useFormik } from "formik";
-import React, { useState } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import { Button, Step, StepLabel, Stepper } from "@mui/material";
-import SellerStep3 from "./Steps/SellerStep3";
-import SellerStep2 from "./Steps/SellerStep2";
-import SellerStep1 from "./Steps/SellerStep1";
-import SellerStep4 from "./Steps/SellerStep4";
+
+const SellerStep1 = lazy(
+  () => import("./Steps/SellerStep1"),
+);
+const SellerStep2 = lazy(
+  () => import("./Steps/SellerStep2"),
+);
+const SellerStep3 = lazy(
+  () => import("./Steps/SellerStep3"),
+);
+const SellerStep4 = lazy(
+  () => import("./Steps/SellerStep4"),
+);
+
 import { useAppDispatch } from "../../Redux Toolkit/store";
 import { createSeller } from "../../Redux Toolkit/Features/Seller/sellerAuthentication";
 import { toast } from "react-toastify";
@@ -81,6 +91,7 @@ const SellerAccountForm = () => {
       </Stepper>
 
       <div className="mt-20 space-y-10 ">
+        <Suspense fallback={<div>Loading...</div>}>
         {activeStep == 0 ? (
           <SellerStep1 formik={formik} />
         ) : activeStep == 1 ? (
@@ -90,6 +101,7 @@ const SellerAccountForm = () => {
         ) : (
           <SellerStep4 formik={formik} />
         )}
+      </Suspense>
       </div>
       <div className="flex items-center justify-between p-5">
         <Button

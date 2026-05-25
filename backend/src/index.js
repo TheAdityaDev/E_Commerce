@@ -98,7 +98,7 @@ app.get("/api/health", (req, res) => {
 
 // Root
 app.get("/", (req, res) => {
-  res.json("Welcome To Ram bazaar.");
+  res.status(200).json({ message: "Welcome To Ram bazaar." });
 });
 
 // IMPORTANT: EXPORT APP FOR VERCEL
