@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { fetchSellerReport } from "../../Redux Toolkit/Features/Seller/sellerSlice";
 import secureLocalStorage from "react-secure-storage";
 
-const sellerDashboard = () => {
+const SellerDashboard = () => {
   const dispatch = useAppDispatch();
 
   const token = useMemo(() => secureLocalStorage.getItem("token"), []);
@@ -35,4 +35,4 @@ const sellerDashboard = () => {
   );
 };
 
-export default sellerDashboard;
+export default SellerDashboard;

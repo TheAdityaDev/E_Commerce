@@ -11,7 +11,7 @@ import {
   ShoppingBag,
 } from "@mui/icons-material";
 import React from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../Redux Toolkit/store";
 import { performedLogout } from "../../Redux Toolkit/Features/Auth/AuthSlice";
 
