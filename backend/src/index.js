@@ -8,6 +8,8 @@ require("dotenv").config();
 const connectDB = require("./db/db.config");
 const rateLimitConfig = require("./config/rateLimit.config");
 
+const PORT = process.env.PORT || 3000;
+
 // Routes
 const sellerRoutes = require("./routes/seller.routes");
 const adminRoutes = require("./routes/admin.routes");
@@ -37,6 +39,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://10.35.211.59:5173",
   "https://bcw49lr2-5173.inc1.devtunnels.ms",
+  "https://e-commerce-plum-two-47.vercel.app/"
 ];
 
 app.use(
