@@ -38,14 +38,6 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
     totalAmount + SHIPPING_CHARGE - Number(couponDiscount || 0)
   );
 
-  // ✅ Debug logs (clean)
-  console.log("\n💰 PAYMENT ORDER SUMMARY:");
-  console.log(`Orders: ${uniqueOrders.length}`);
-  console.log(`Total: ₹${totalAmount}`);
-  console.log(`Shipping: ₹${SHIPPING_CHARGE}`);
-  console.log(`Discount: ₹${couponDiscount || 0}`);
-  console.log(`Final: ₹${finalAmount}`);
-  console.log(`Paise: ${finalAmount * 100}\n`);
 
   // ✅ Create payment order
   const paymentOrder = await paymentOrderModel.create({
@@ -119,15 +111,8 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
 
     try {
       const payment = await razorpay.payments.fetch(paymentId);
-      console.log(
-        `Razorpay payment status: ${payment.status} for payment ${paymentId}`,
-      );
 
       if (payment.status === "captured") {
-        console.log(
-          `✅ Payment ${paymentId} CAPTURED - updating orders to CONFIRM status`,
-        );
-
         // Payment successful - update all orders to CONFIRM with CONFIRMED payment
         await Promise.all(
           (paymentOrder.order || []).map(async (orderId) => {
@@ -136,9 +121,6 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
               order.paymentStatus = paymentStatus.CONFIRMED;
               order.orderStatus = orderStatus.CONFIRM;
               await order.save();
-              console.log(
-                `✅ Order ${orderId} updated: orderStatus=CONFIRM (from PENDING), paymentStatus=CONFIRMED`,
-              );
             }
           }),
         );
@@ -157,14 +139,10 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
 
         paymentOrder.status = paymentStatus.PAID;
         await paymentOrder.save();
-        console.log(`✅ Payment order ${paymentOrder._id} marked as PAID`);
         return true;
       } else if (payment.status === "authorized") {
         // Some Razorpay test/live configurations return "authorized" first.
         // Attempt server-side capture before marking payment as failed.
-        console.log(
-          `⏳ Payment ${paymentId} is AUTHORIZED - attempting capture...`,
-        );
         try {
           const capturedPayment = await razorpay.payments.capture(
             paymentId,
@@ -186,9 +164,6 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
                 order.paymentStatus = paymentStatus.CONFIRMED;
                 order.orderStatus = orderStatus.CONFIRM;
                 await order.save();
-                console.log(
-                  `✅ Order ${orderId} updated after capture: orderStatus=CONFIRM, paymentStatus=CONFIRMED`,
-                );
               }
             }),
           );
@@ -206,15 +181,8 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
 
           paymentOrder.status = paymentStatus.PAID;
           await paymentOrder.save();
-          console.log(
-            `✅ Payment ${paymentId} captured server-side, payment order marked as PAID`,
-          );
           return true;
         } catch (captureError) {
-          console.error(
-            `❌ Failed to capture authorized payment ${paymentId}:`,
-            captureError,
-          );
           throw captureError;
         }
       } else {
@@ -230,9 +198,6 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
               order.paymentStatus = paymentStatus.FAILED;
               order.orderStatus = orderStatus.CANCELLED;
               await order.save();
-              console.log(
-                `❌ Order ${orderId} CANCELLED: paymentStatus=FAILED, orderStatus=CANCELLED`,
-              );
             }
           }),
         );
@@ -242,7 +207,6 @@ async paymentOrder(user, ordersInput, couponDiscount = 0, couponCode = null) {
         return false;
       }
     } catch (err) {
-      console.error(`❌ Error processing payment ${paymentId}:`, err);
 
       // On error, mark orders as CANCELLED
       await Promise.all(
@@ -317,20 +281,15 @@ async createRazorpayPaymentLink(user, amount, orderId) {
       expire_by: Math.floor(Date.now() / 1000) + 30 * 60,
     };
 
-    console.log("Razorpay Request:", paymentLinkRequest);
-
     const paymentLink = await razorpay.paymentLink.create(paymentLinkRequest);
 
     return paymentLink;
 
   } catch (error) {
-    console.error(
-      "RAZORPAY ERROR:",
-      error?.response?.data || error?.message || error
-    );
     throw new Error("Failed to create payment link");
   }
 }
 }
+
 
 module.exports = new paymentService();

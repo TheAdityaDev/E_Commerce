@@ -53,7 +53,6 @@ class Posts {
 
       return newPost;
     } catch (err) {
-      console.error(err);
       throw err;
     }
   }

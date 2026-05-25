@@ -9,68 +9,72 @@ const sendEmail = require("../util/sendEmail.util");
 const bcrypt = require("bcrypt");
 
 class authService {
- async sendLoginOtp(email) {
-  const SIGNIN_PREFIX = "signin_";
+  async sendLoginOtp(email) {
+    const SIGNIN_PREFIX = "signin_";
 
-  // Remove prefix if exists
-  if (email.startsWith(SIGNIN_PREFIX)) {
-    email = email.slice(SIGNIN_PREFIX.length);
+    // Remove prefix if exists
+    if (email.startsWith(SIGNIN_PREFIX)) {
+      email = email.slice(SIGNIN_PREFIX.length);
+    }
+
+    // Fetch seller and user at once
+    const [seller, user] = await Promise.all([
+      SellerModel.findOne({ email }).select("accountStatus"),
+      userModel.findOne({ email }),
+    ]);
+
+    /* ************************************************************ */
+    // Blocked statuses !important
+    const blockedStatuses = [
+      "INACTIVE",
+      "PENDING_VERIFICATION",
+      "BLOCKED",
+      "CLOSED",
+      "SUSPENDED",
+      "BANNED",
+      "REJECTED",
+    ];
+
+    // If seller exists and is blocked, prevent login completely
+    if (
+      seller &&
+      blockedStatuses.includes(seller.accountStatus.toUpperCase())
+    ) {
+      throw new Error(
+        `Seller account is ${seller.accountStatus.toLowerCase()}. Please contact support.`,
+      );
+    }
+    /* **************************************************************** */
+
+    // ✅ From here, we only generate OTP for allowed accounts
+    // Delete old OTP if exists
+    const existingVerificationCode = await verificationCodeModel.findOne({
+      email,
+    });
+    if (existingVerificationCode) await existingVerificationCode.deleteOne();
+
+    // Generate new OTP
+    const otp = generateOtp.generateOtp();
+    const hashedOtp = await generateOtp.hashOtp(otp);
+
+    // Save OTP
+    await verificationCodeModel.create({
+      email,
+      otp: hashedOtp,
+      createdAt: new Date(),
+    });
+
+    // Send OTP email asynchronously
+    const subject = "Ram Mart Login/Signup OTP";
+
+    const htmlBody = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <style> body{ margin:0; padding:0; background:#0f172a; font-family:Arial,sans-serif; } .container{ width:100%; padding:40px 0; background:linear-gradient(135deg,#0f172a,#111827,#1e293b); } .card{ width:420px; margin:auto; background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border-radius:24px; overflow:hidden; border:1px solid rgba(255,255,255,0.12); box-shadow:0 10px 40px rgba(0,0,0,0.4); } .header{ padding:40px 30px; text-align:center; background:linear-gradient(135deg,#ff6b00,#ff3d00); } .logo{ font-size:34px; font-weight:bold; color:#fff; letter-spacing:1px; margin:0; } .subtitle{ color:#ffe0d1; font-size:14px; margin-top:10px; } .content{ padding:40px 30px; text-align:center; color:white; } .title{ font-size:28px; font-weight:bold; margin-bottom:16px; color:#fff; } .desc{ color:#cbd5e1; font-size:15px; line-height:26px; } .otp-box{ margin:35px 0; padding:22px; border-radius:20px; background:linear-gradient(135deg,#1e293b,#334155); border:1px solid rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,115,0,0.35), inset 0 0 12px rgba(255,255,255,0.04); } .otp{ font-size:42px; letter-spacing:12px; font-weight:bold; color:#ff7b00; } .warning{ color:#94a3b8; font-size:13px; line-height:22px; } .button{ display:inline-block; margin-top:25px; padding:14px 28px; border-radius:12px; background:linear-gradient(135deg,#ff6b00,#ff3d00); color:#fff !important; text-decoration:none; font-weight:bold; font-size:15px; box-shadow:0 6px 20px rgba(255,107,0,0.4); } .footer{ text-align:center; padding:25px; color:#94a3b8; font-size:12px; border-top:1px solid rgba(255,255,255,0.08); } @media only screen and (max-width:600px){ .card{ width:92% !important; } .otp{ font-size:34px !important; letter-spacing:8px !important; } } </style> </head> <body> <div class="container"> <div class="card"> <!-- HEADER --> <div class="header"> <h1 class="logo">🛒 Ram Mart</h1> <div class="subtitle"> Secure Login Verification </div> </div> <!-- CONTENT --> <div class="content"> <div class="title"> Verify Your Login </div> <div class="desc"> Use the verification code below to complete your login/signup process. This OTP will expire in 10 minutes. </div> <!-- OTP BOX --> <div class="otp-box"> <div class="otp">${otp}</div> </div><div class="warning"> If you didn’t request this verification code, you can safely ignore this email. </div> </div> <!-- FOOTER --> <div class="footer"> © 2026 Ram Mart • Secure Authentication System </div> </div> </div> </body> </html>`;
+
+    setImmediate(() => {
+      sendEmail(email, subject, htmlBody).catch(() => {});
+    });
+
+    return otp;
   }
-
-  // Fetch seller and user at once
-  const [seller, user] = await Promise.all([
-    SellerModel.findOne({ email }).select("accountStatus"),
-    userModel.findOne({ email }),
-  ]);
-  
-  /* ************************************************************ */
-  // Blocked statuses !important
-  const blockedStatuses = [
-    "INACTIVE",
-    "PENDING_VERIFICATION",
-    "BLOCKED",
-    "CLOSED",
-    "SUSPENDED",
-    "BANNED",
-    "REJECTED",
-  ];
-
-  // If seller exists and is blocked, prevent login completely
-  if (seller && blockedStatuses.includes((seller.accountStatus).toUpperCase())) {
-    throw new Error(
-      `Seller account is ${seller.accountStatus.toLowerCase()}. Please contact support.`
-    );
-  }
-  /* **************************************************************** */
-
-  // ✅ From here, we only generate OTP for allowed accounts
-  // Delete old OTP if exists
-  const existingVerificationCode = await verificationCodeModel.findOne({ email });
-  if (existingVerificationCode) await existingVerificationCode.deleteOne();
-
-  // Generate new OTP
-  const otp = generateOtp.generateOtp();
-  const hashedOtp = await generateOtp.hashOtp(otp);
-  console.log("OTP:",otp);
-  
-
-  // Save OTP
-  await verificationCodeModel.create({
-    email,
-    otp: hashedOtp,
-    createdAt: new Date(),
-  });
-
-  // Send OTP email asynchronously
-  const subject = "Ram Bazar Login/Signup OTP";
-  const body = `Your OTP is ${otp}. Please enter it to complete login process.`;
-
-  setImmediate(() => {
-    sendEmail(email, subject, body).catch((err) => console.error("Email error:", err));
-  });
-
-  return otp;
-}
 
   async createUser(req) {
     const { email, password, mobile, alternateNumber, name } = req;

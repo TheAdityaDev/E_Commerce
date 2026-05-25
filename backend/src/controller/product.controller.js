@@ -70,6 +70,8 @@ class sellerProductController {
   async getProductOG(req, res) {
     try {
       const { productId } = req.params;
+      console.log("productID:",productId);
+      
 
       const product = await productService.findProductById(productId);
 
@@ -112,7 +114,6 @@ class sellerProductController {
 
       res.send(html);
     } catch (error) {
-      console.error(error);
       res.status(500).send("Server Error");
     }
   }
@@ -131,7 +132,6 @@ class sellerProductController {
       const products = await productService.searchProduct({ filter: filter.trim() });
       return res.status(200).json(products);
     } catch (error) {
-      console.error("Search error:", error);
       res.status(400).json({ error: error.message });
     }
   }

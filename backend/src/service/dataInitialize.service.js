@@ -9,8 +9,6 @@ class dataInitializeService {
     try {
       const isAdminExist = await userModel.findOne({ email: adminMail });
 
-      
-
       const password = await bcrypt.hash(adminPassword, 10);
 
       if (!isAdminExist) {
@@ -22,11 +20,8 @@ class dataInitializeService {
           mobile: mobile,
         });
         await adminUser.save();
-
-        console.log("admin created successfully..");
       }
     } catch (error) {
-      console.error("Error initializing admin user:");
       throw error;
     }
   }

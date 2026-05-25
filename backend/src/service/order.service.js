@@ -21,22 +21,6 @@ class orderService {
     if (!shippingAddress) throw new Error("Shipping address required");
     if (!cart?.cartItems?.length) throw new Error("Cart is empty");
 
-    console.log("🔍 DEBUG: Cart Items Count =", cart.cartItems.length);
-    console.log(
-      "🔍 DEBUG: Cart Items =",
-      JSON.stringify(
-        cart.cartItems.map((item) => ({
-          productId: item.product?._id,
-          quantity: item.quantity,
-          mrpPrice: item.mrpPrice,
-          sellingPrice: item.sellingPrice,
-          seller: item.product?.seller?._id || item.product?.seller,
-        })),
-        null,
-        2,
-      ),
-    );
-
     // -----------------------------
     // 2️⃣ Ensure address exists
     // -----------------------------
@@ -74,10 +58,6 @@ class orderService {
       return acc;
     }, {});
 
-    console.log("🔍 DEBUG: Sellers =", Object.keys(itemsBySeller));
-    for (const [sellerId, items] of Object.entries(itemsBySeller)) {
-      console.log(`  Seller ${sellerId}: ${items.length} items`);
-    }
 
     const orders = [];
 
@@ -101,13 +81,6 @@ class orderService {
         totalMrpPrice,
         totalSellingPrice,
       );
-
-      console.log(`💳 ORDER FOR SELLER ${sellerId}:`);
-      console.log(`   Items: ${cartItems.length}, Quantities: ${totalItem}`);
-      console.log(
-        `   MRP Total: ₹${totalMrpPrice}, Selling Total: ₹${totalSellingPrice}`,
-      );
-      console.log(`   Discount: ${discount}%`);
 
       // -----------------------------
       // 6️⃣ Create order items
@@ -236,7 +209,6 @@ class orderService {
   }
 
   async getSellersOrder(sellerId) {
-    console.log("sellerId in service:", sellerId);
 
     return await orderStatusModel
       .find({ seller: sellerId })
@@ -317,10 +289,7 @@ class orderService {
           { returnDocument: "after" },
         );
       } catch (reportError) {
-        console.error(
-          "Failed to update seller report on cancellation:",
-          reportError,
-        );
+        throw reportError;
       }
     }
 

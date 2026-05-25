@@ -50,10 +50,6 @@ class cartItemService {
       throw new Error("Unauthorized Access");
     }
 
-    console.log(
-      cartItem.userId.toString() !== userId.toString() && cartItemId.toString(),
-    );
-
     await cartItem.deleteOne({ _id: cartItem._id });
 
     await cartItemModel.findByIdAndDelete(cartItemId);

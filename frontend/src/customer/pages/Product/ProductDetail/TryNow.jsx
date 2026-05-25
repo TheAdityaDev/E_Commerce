@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Wand2,
   ShieldCheck,
+  X,
 } from "lucide-react";
 // axios import removed; use axiosInstance configured for your frontend
 import { logo } from "../../../json/common";
@@ -15,7 +16,7 @@ import { axiosInstance } from "../../../../config/api.config";
 const API_KEY = import.meta.env.VITE_GEMINI_KEY;
 const NVIDIA_API_KEY = import.meta.env.VITE_NVIDIA_KEY || API_KEY;
 
-const TryNow = ({ image, allImages }) => {
+const TryNow = ({ image, allImages, setTryNow }) => {
   const [sourceImage, setSourceImage] = useState(image || "");
   const [currentImage, setCurrentImage] = useState(0);
   const [userImage, setUserImage] = useState(null);
@@ -297,8 +298,12 @@ const TryNow = ({ image, allImages }) => {
     setSourceImage(absolute);
   };
   return (
-    <div className="h-full min-h-0 w-full bg-slate-50 rounded-2xl flex items-stretch justify-center p-2 sm:p-3">
+    <div className="h-[95vh] min-h-0 w-full bg-slate-50 rounded-2xl flex items-stretch justify-center p-2 sm:p-3">
       <div className="w-full max-w-[900px] h-full min-h-0 max-h-full bg-white rounded-[1.75rem] sm:rounded-[2.5rem] shadow-xl shadow-slate-300/40 overflow-hidden flex flex-col border border-slate-100">
+        <X
+          className="w-6 h-6 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer absolute top-4 right-4 z-10"
+          onClick={() => setTryNow(false)}
+        />
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-5 sm:p-8 md:p-10">
           <header className="flex items-center justify-between mb-10 animate-in fade-in slide-in-from-top duration-300">
             <div className="flex items-center gap-4">

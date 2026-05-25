@@ -55,8 +55,6 @@ class Posts {
       const postId = req.params.postId;
       const productId = req.body.product || req.params.productId;
 
-      console.log("PostId In Controller:", postId);
-
       const { title, content, rating } = req.body;
 
       const post = await postsService.updatePosts(

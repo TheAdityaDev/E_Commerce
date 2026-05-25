@@ -24,10 +24,10 @@ import {
   X,
   ChevronLeft,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-import SimilarProduct from "./SimilarProduct";
-import PostForm from "./Posts/PostForm";
-import TryNow from "./TryNow";
+import React, { useEffect, useRef, useState , lazy , Suspense } from "react";
+const SimilarProduct = lazy(()=> import("./SimilarProduct"))
+const PostForm = lazy(()=> import("./Posts/PostForm"))
+const TryNow = lazy(()=> import("./TryNow"))
 import {
   useAppDispatch,
   useAppSelector,
@@ -75,47 +75,47 @@ export function PostMediaGallery({ media }) {
 
   const videoRef = useRef(null);
 
-const [isPlaying, setIsPlaying] = useState(false);
-const [isMuted, setIsMuted] = useState(false);
-const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-const togglePlay = () => {
-  if (!videoRef.current) return;
+  const togglePlay = () => {
+    if (!videoRef.current) return;
 
-  if (videoRef.current.paused) {
-    videoRef.current.play();
-    setIsPlaying(true);
-  } else {
-    videoRef.current.pause();
-    setIsPlaying(false);
-  }
-};
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
 
-const toggleMute = () => {
-  if (!videoRef.current) return;
+  const toggleMute = () => {
+    if (!videoRef.current) return;
 
-  videoRef.current.muted = !videoRef.current.muted;
-  setIsMuted(videoRef.current.muted);
-};
+    videoRef.current.muted = !videoRef.current.muted;
+    setIsMuted(videoRef.current.muted);
+  };
 
-const handleTimeUpdate = () => {
-  if (!videoRef.current) return;
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
 
-  const value =
-    (videoRef.current.currentTime / videoRef.current.duration) * 100;
+    const value =
+      (videoRef.current.currentTime / videoRef.current.duration) * 100;
 
-  setProgress(value);
-};
+    setProgress(value);
+  };
 
-const handleZoom = () => {
-  if (!videoRef.current) return;
+  const handleZoom = () => {
+    if (!videoRef.current) return;
 
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  } else {
-    videoRef.current.requestFullscreen();
-  }
-};
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      videoRef.current.requestFullscreen();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -199,7 +199,6 @@ const ProductDetail = () => {
   const [show, setShow] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(2);
   const { productId, categoryId } = useParams();
-  const imgRefBox = useRef(null);
   const imgRef = useRef(null);
   const [showPostModal, setShowPostModal] = useState(false);
 
@@ -387,9 +386,8 @@ const ProductDetail = () => {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const LENS_SIZE = 150;
 
-  const handelCurrentImage = (index) => {
-    setCurrentImage(index);
-  };
+  const [showTryNow, setShowTryNow] = useState(false);
+
 
   const handleChangeQuantity = (value) => {
     if (value === 0) {
@@ -407,8 +405,10 @@ const ProductDetail = () => {
     throw new Error("Quantity must be 1.");
   }
 
-  const showTryNow = () => {
+  const showTryNowProduct = () => {
     if (isOutOfStock) return;
+    setShowTryNow(true); // Open the AI Fusion Modal
+    setShow(false);      // Close the "Initialize AR" intro modal
     setShow((prev) => !prev);
   };
 
@@ -471,7 +471,7 @@ const ProductDetail = () => {
         alert("Share URL copied to clipboard:\n" + ogUrl);
       }
     } catch (error) {
-      console.log("Share error:", error);
+      throw new Error("Sharing failed");
     }
   };
 
@@ -491,14 +491,6 @@ const ProductDetail = () => {
     setBgPos(`${bgX}% ${bgY}%`);
   };
 
-  const handleMouseMoveSquare = (e) => {
-    const rect = imgRefBox.current.getBoundingClientRect();
-
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    setPos({ x, y });
-  };
 
   const handleLoadMore = () => {
     // Show 2 more reviews on each click
@@ -540,7 +532,7 @@ const ProductDetail = () => {
 
     const stats = getRatingStats(all);
     return stats;
-  }, [product?.ratings, filteredPosts]);
+  }, [product, filteredPosts]);
 
   const ratingStats = combinedRatings;
 
@@ -548,8 +540,6 @@ const ProductDetail = () => {
     e.preventDefault();
     formik.handleSubmit();
   };
-
-  // console.log(rating); // 4.3
 
   if (error || !product) {
     return (
@@ -582,33 +572,6 @@ const ProductDetail = () => {
         product={product}
         handlePostSubmit={handlePostSubmit}
       />
-      {show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2 sm:p-4">
-          {/* Modal Box */}
-          <div
-            className="
-        relative w-full max-h-[95vh] overflow-hidden
-        rounded-2xl border border-slate-200 bg-slate-50 shadow-2xl
-        sm:w-[min(920px,95vw)]
-      "
-          >
-            {/* Close Button */}
-            <X
-              onClick={showTryNow}
-              className="
-          absolute right-3 top-3 z-20 cursor-pointer
-          rounded-full bg-white/90 p-1 text-gray-700 shadow
-          hover:bg-white
-        "
-            />
-
-            {/* Content */}
-            <div className="h-[95vh] sm:h-[90vh] overflow-hidden pt-10">
-              <TryNow image={images[currentImage]} allImages={images} />
-            </div>
-          </div>
-        </div>
-      )}
       {/* Try Now Modal */}
       <AnimatePresence>
         {show && (
@@ -652,7 +615,7 @@ const ProductDetail = () => {
                   />
                 </div>
                 <Button
-                  onClick={showTryNow}
+                  onClick={showTryNowProduct}
                   disabled={isOutOfStock}
                   variant="contained"
                   sx={{ py: 2, bgcolor: "#0f172a", borderRadius: 4 }}
@@ -663,8 +626,32 @@ const ProductDetail = () => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
 
+        <Suspense fallback={<h1>Loading...</h1>}>
+        {showTryNow && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-5xl max-h-[95vh] overflow-hidden"
+            >
+              <TryNow
+                image={images[currentImage]}
+                allImages={images}
+                onClose={() => setShowTryNow(false)}
+                setTryNow={setShowTryNow}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+        </Suspense>
+      </AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -973,7 +960,9 @@ const ProductDetail = () => {
                         <div className="flex justify-between items-start mb-8">
                           <div className="flex items-center gap-5">
                             <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 text-xl">
-                              {(post?.user?.name || user?.name || "U").charAt(0).toUpperCase()}
+                              {(post?.user?.name || user?.name || "U")
+                                .charAt(0)
+                                .toUpperCase()}
                             </div>
                             <div>
                               <h4 className="font-bold text-slate-900 text-lg">
@@ -1002,9 +991,117 @@ const ProductDetail = () => {
                           <BadgeCheckIcon size={16} className="text-teal-500" />
                         </div>
 
-                        <p className="text-slate-600 leading-relaxed text-lg italic mb-8">
-                          {post?.content}
-                        </p>
+                        {(() => {
+                          const hashtags =
+                            post?.content
+                              ?.match(/#\w+/g)
+                              ?.map((tag) => tag.trim()) || [];
+
+                          const cleanContent = post?.content
+                            ?.replace(/#\w+/g, "")
+                            .trim();
+
+                          return (
+                            <>
+                              {/* Content */}
+                              <p className="text-slate-600 leading-relaxed text-lg italic mb-6">
+                                {cleanContent}
+                              </p>
+
+                              {/* Animated Discord Style Tags */}
+                              {hashtags.length > 0 && (
+                                <div className="flex flex-wrap gap-3">
+                                  {hashtags.map((tag, index) => (
+                                    <div
+                                      key={index}
+                                      className="
+                group relative overflow-hidden
+                px-4 py-2 rounded-2xl
+                bg-[#5865F2]/10
+                border border-[#5865F2]/20
+                backdrop-blur-md
+                cursor-pointer
+                transition-all duration-300
+                hover:scale-105
+                hover:border-[#5865F2]/40
+                hover:shadow-[0_0_25px_rgba(88,101,242,0.35)]
+              "
+                                    >
+                                      {/* Glow Animation */}
+                                      <div
+                                        className="
+                  absolute inset-0
+                  opacity-0 group-hover:opacity-100
+                  transition-opacity duration-500
+                "
+                                      >
+                                        <div
+                                          className="
+                                            absolute -inset-[100%]
+                                            animate-[spin_4s_linear_infinite]
+                                            bg-conic-gradient
+                                            from-[#5865F2]
+                                            via-cyan-400
+                                            to-fuchsia-500
+                                            blur-xl
+                                            opacity-30
+                                          "
+                                        />
+                                      </div>
+
+                                      {/* Shine Effect */}
+                                      <div
+                                        className="
+                  absolute inset-0
+                  -translate-x-full
+                  group-hover:translate-x-full
+                  transition-transform duration-1000
+                  bg-gradient-to-r
+                  from-transparent
+                  via-white/30
+                  to-transparent
+                  skew-x-12
+                "
+                                      />
+
+                                      {/* Tag Text */}
+                                      <span
+                                        className="
+                                          relative z-10
+                                          text-[#5865F2]
+                                          font-black
+                                          text-xs
+                                          tracking-wide
+                                          uppercase
+                                          transition-all duration-300
+                                          group-hover:text-white
+                                        "
+                                      >
+                                        {tag}
+                                      </span>
+
+                                      {/* Background Fill */}
+                                      <div
+                                        className="
+                                        absolute inset-0
+                                        bg-gradient-to-r
+                                        from-[#5865F2]
+                                        to-indigo-500
+                                        scale-x-0
+                                        group-hover:scale-x-100
+                                        origin-left
+                                        transition-transform duration-300
+                                        rounded-2xl
+                                        -z-0
+                                      "
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         <div className="flex items-center justify-center flex-wrap gap-4 mb-8">
                           <PostMediaGallery

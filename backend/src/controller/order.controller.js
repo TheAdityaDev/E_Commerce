@@ -26,10 +26,6 @@ class orderController {
         throw new Error("Shipping address is required");
       }
 
-      console.log("\n📝 STEP 1: Cart");
-      console.log(`Items: ${cart.cartItems.length}`);
-      console.log(`Cart Total: ₹${cart.totalSellingPrice}`);
-
       // ✅ Create orders
       const orders = await orderService.createOrder(
         user,
@@ -41,10 +37,6 @@ class orderController {
         throw new Error("Orders not created");
       }
 
-      console.log("\n📝 STEP 2: Orders Created");
-      orders.forEach((o, i) => {
-        console.log(`Order ${i + 1}: ₹${o.totalSellingPrice}`);
-      });
 
       // ✅ Create payment order (fixed logic)
       const paymentOrder = await paymentService.paymentOrder(
@@ -57,10 +49,6 @@ class orderController {
       if (!paymentOrder) {
         throw new Error("Payment order creation failed");
       }
-
-      console.log("\n📝 STEP 3: Payment Order");
-      console.log(`ID: ${paymentOrder._id}`);
-      console.log(`Amount: ₹${paymentOrder.amount}`);
 
       return res.status(201).json({
         message: "Order created successfully",
@@ -146,7 +134,6 @@ class orderController {
     try {
       const orderId = req.params.orderId;
       const user = req.user;
-      console.log("OrderID:", orderId);
 
       const cancelOrder = await orderService.cancelOrder(orderId, user);
 

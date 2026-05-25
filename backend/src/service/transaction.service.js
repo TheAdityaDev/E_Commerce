@@ -14,7 +14,6 @@ class transactionService {
 
   // ✅ Create transaction with payment details
   async createTransaction(orderId, paymentData = {}) {
-    console.log(paymentData);
     // find order by id
     const order = await orderStatusModel.findById(orderId).populate("seller");
 
@@ -37,7 +36,6 @@ class transactionService {
       ...(paymentId ? { paymentId } : {}),
     });
     if (existingTransaction) {
-      console.log(`ℹ️ Transaction already exists for order ${orderId}, skipping create`);
       return existingTransaction;
     }
 
@@ -55,7 +53,6 @@ class transactionService {
     });
     
     const savedTransaction = await transaction.save();
-    console.log(`✅ Transaction created: ${savedTransaction._id} with payment details`);
     return savedTransaction;
   }
   // Get transaction by seller id

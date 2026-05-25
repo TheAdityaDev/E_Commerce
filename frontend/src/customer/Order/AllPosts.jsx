@@ -227,7 +227,7 @@ const AllPosts = () => {
                 {/* Content */}
                 <div className="px-8 pb-4">
                   <p className="text-slate-600 leading-relaxed font-medium italic text-lg mb-6">
-                    "{post.content}"
+                    {post.content}
                   </p>
 
                   {/* Media Pagination */}

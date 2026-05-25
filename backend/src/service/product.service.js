@@ -102,7 +102,6 @@ class productService {
       // Save product
       return await product.save();
     } catch (error) {
-      console.error("Error in createProduct:", error.message);
       throw new Error(error.message);
     }
   }
@@ -323,7 +322,6 @@ async searchProduct({ filter }) {
     return products.slice(0, 10);
 
   } catch (err) {
-    console.error("Search error:", err);
     throw new Error("Search failed: " + err.message);
   }
 }

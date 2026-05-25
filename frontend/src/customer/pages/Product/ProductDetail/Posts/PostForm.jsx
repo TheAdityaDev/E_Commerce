@@ -100,6 +100,7 @@ const PostForm = ({ formik, showPostModal, setShowPostModal, product }) => {
                           : "text-gray-300"
                       }`}
                       onClick={() => formik.setFieldValue("rating", star)}
+                      onDoubleClick={()=> formik.setFieldValue("rating",0)}
                     />
                   ))}
                 </div>

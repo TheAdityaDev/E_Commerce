@@ -48,7 +48,6 @@ class sellerController {
       // const status = req.query.status; // default
       const status =
         typeof req.query.status === "string" ? req.query.status : "";
-      console.log("STATUS TYPE:", typeof status, status);
 
       let filter = "";
 
@@ -154,8 +153,6 @@ class sellerController {
       const sellerId = req.params.sellerId || req.params.id;
       const { status } = req.body;
 
-      console.log("Status:", status);
-
       if (!sellerId) {
         return res.status(400).json({ message: "Seller ID is required" });
       }
@@ -165,8 +162,6 @@ class sellerController {
       }
 
       const seller = await sellerService.updateSellerStatus(sellerId, status);
-
-      console.log("Seller status:", status);
 
       res.status(200).json({
         data: seller,

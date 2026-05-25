@@ -22,10 +22,6 @@ const paymentSuccessHandler = async (req, res) => {
     if (!paymentId)
       return res.status(400).json({ message: "Payment ID required" });
 
-    console.log(
-      `\n✅ PAYMENT CALLBACK: paymentId=${paymentId}, paymentLinkId=${paymentLinkId}, paymentOrderId=${paymentOrderId}`,
-    );
-
     // Fetch payment order by paymentOrderId (preferred for inline checkout)
     // or by Razorpay paymentLinkId (hosted payment link flow)
     let paymentOrder;
@@ -48,15 +44,8 @@ const paymentSuccessHandler = async (req, res) => {
     }
 
     if (!paymentOrder) {
-      console.log(
-        `❌ Payment order not found for linkId: ${paymentLinkId} / paymentOrderId: ${paymentOrderId}`,
-      );
       return res.status(404).json({ message: "Payment order not found" });
     }
-
-    console.log(
-      `Found paymentOrder: ${paymentOrder._id}, Current status: ${paymentOrder.status}`,
-    );
 
     // Process the payment and update order statuses
     const paymentSuccess = await paymentService.proceedPayment(
@@ -66,20 +55,12 @@ const paymentSuccessHandler = async (req, res) => {
     );
 
     if (paymentSuccess) {
-      console.log(
-        `✅ PAYMENT CONFIRMED - updating inventory and seller reports...`,
-      );
-
       // Create transactions and update seller reports for each order
       // ℹ️ NOTE: proceedPayment() already updated order statuses to CONFIRM + CONFIRMED payment status
       const promises = (paymentOrder.order || []).map(async (orderId) => {
         try {
           const order = await orderService.findOrderById(orderId);
           if (!order) return;
-
-          console.log(
-            `✅ Order ${orderId} - processing product inventory and reports...`,
-          );
 
           // Reduce product quantity
           for (const item of order.orderItems) {
@@ -108,7 +89,6 @@ const paymentSuccessHandler = async (req, res) => {
 
       // Wait for all updates to complete
       await Promise.all(promises);
-      console.log(`✅ All order processing complete`);
 
       // Clear user's cart
       await cartModel.findOneAndUpdate(
@@ -130,14 +110,15 @@ const paymentSuccessHandler = async (req, res) => {
         });
       }
 
-      const totalSellingPrice = (paymentOrder.order || []).reduce((sum, o) => sum + (o.totalSellingPrice || 0), 0);
-      const tax = paymentOrder.amount - (79) + (paymentOrder.couponDiscount || 0) - totalSellingPrice;
-
-      console.log(`Tax calculated: ₹${tax}`);
-
-      if (paymentOrder.order && paymentOrder.order.length > 0) {
-        console.log("Tax logging placeholder for seller:", paymentOrder.order[0].seller);
-      }
+      const totalSellingPrice = (paymentOrder.order || []).reduce(
+        (sum, o) => sum + (o.totalSellingPrice || 0),
+        0,
+      );
+      const tax =
+        paymentOrder.amount -
+        79 +
+        (paymentOrder.couponDiscount || 0) -
+        totalSellingPrice;
 
       cartModel.findOneAndDelete({ user: user._id }).catch((err) => {
         console.error("Error clearing cart after payment:", err);
@@ -150,7 +131,6 @@ const paymentSuccessHandler = async (req, res) => {
         orderIds: paymentOrder.order,
       });
     } else {
-      console.warn(`❌ PAYMENT NOT CAPTURED - Orders will remain CANCELLED`);
       return res.status(200).json({
         message: "❌ Payment failed or not captured. Order cancelled.",
         status: "Failed",
