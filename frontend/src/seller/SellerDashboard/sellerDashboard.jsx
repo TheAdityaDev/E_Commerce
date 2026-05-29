@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import SellerDrawerList from "../sidebar/sellerDrawerList";
+import SellerDrawerList from "../sidebar/SellerDrawerList";
 import Navbar from "../../common/Navbar";
 import SellerRoutes from "../../routes/SellerRoutes/SellerRoutes";
 import { useAppDispatch, useAppSelector } from "../../Redux Toolkit/store";
