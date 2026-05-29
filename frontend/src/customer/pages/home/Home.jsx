@@ -4,7 +4,7 @@ const Gird = lazy(() => import("./Gird/Gird"));
 const Deal = lazy(() => import("./Deal/Deal"));
 
 const ElectronicCategory = lazy(
-  () => import("./ElectronicCategory/electronicCategory"),
+  () => import("./ElectronicCategory/ElectronicCategory"),
 );
 const HomeCategory = lazy(() => import("./HomeCategory/HomeCategory"));
 
