@@ -10,18 +10,9 @@ const ElectronicCategory = () => {
 
   const scrollRef = useRef(null);
 
-  const [showButtons, setShowButtons] = useState(false);
+  const showButtons = homeCategories && homeCategories.length > 10;
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-
-  // ✅ Check item count
-  useEffect(() => {
-    if (homeCategories && homeCategories.length > 10) {
-      setShowButtons(true);
-    } else {
-      setShowButtons(false);
-    }
-  }, [homeCategories]);
 
   // ✅ Handle scroll state
   const handleScroll = () => {
