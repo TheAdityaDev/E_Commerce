@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import ElectronicCategoryCard from "./electronicCategoryCard";
+import ElectronicCategoryCard from "./ElectronicCategoryCard";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { useAppSelector } from "../../../../Redux Toolkit/store";
 
