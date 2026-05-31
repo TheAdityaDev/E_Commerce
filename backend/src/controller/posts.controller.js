@@ -103,13 +103,16 @@ class Posts {
 
       let cachedProducts = null;
 
-      if (redisClient.isOpen) {
-        cachedProducts = await redisClient.get(`posts_${productId}`);
-      }
+      try {
+        const rawCache = await redisClient.get(`posts_${productId}`);
+        if (rawCache && typeof rawCache === "string") {
+          cachedProducts = JSON.parse(rawCache);
+        }
+      } catch (e) { console.error("Redis parse error:", e); }
 
       if (cachedProducts) {
         return res.status(200).json({
-          posts: JSON.parse(cachedProducts),
+          posts: cachedProducts,
         });
       }
 
