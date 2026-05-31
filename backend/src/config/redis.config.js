@@ -1,8 +1,8 @@
 const redis = require("redis");
 
 const redisClient = redis.createClient({
-  host: "127.0.0.1",
-  port: 6379,
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 redisClient.on("error", (err) => {
