@@ -13,7 +13,6 @@ export const fetchPosts = createAsyncThunk(
   "/posts/fetchPosts",
   async ({ token, productId, signal, userName }, { rejectWithValue }) => {
     try {
-      console.log("🚀 Fetching posts for:", productId);
       const response = await axiosInstance.get(`/posts?product=${productId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -21,7 +20,6 @@ export const fetchPosts = createAsyncThunk(
         signal,
       });
 
-      console.log("✅ Backend response:", response.data);
       const data = response.data;
 
       // ✅ Handle posts array correctly
@@ -32,7 +30,6 @@ export const fetchPosts = createAsyncThunk(
         }));
       }
 
-      console.log("📦 Posts after processing:", data.posts);
       return data;
     } catch (error) {
       console.error("❌ Error fetching posts:", error);
@@ -76,8 +73,6 @@ export const fetchUserAllPosts = createAsyncThunk(
         },
         signal,
       });
-
-      console.log(response.data);
 
       return response.data;
     } catch (error) {
