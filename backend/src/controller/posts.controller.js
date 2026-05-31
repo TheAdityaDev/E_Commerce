@@ -5,7 +5,7 @@ const postsService = require("../service/posts.service");
 class Posts {
   async getPosts(req, res) {
     try {
-      const productId = req.query.product; // ✅ Get product filter from query
+      const productId = req.query.product; 
       const cacheKey = productId ? `posts_${productId}` : "posts";
       const cachedProducts = await redisClient.get(cacheKey);
 
@@ -94,36 +94,47 @@ class Posts {
   }
 
   async getProductPosts(req, res) {
-    try {
-      const productId = req.params.productId;
-      const cachedProducts = await redisClient.get(`posts_${productId}`);
+  try {
+    const productId = req.params.productId || req.query.product;
 
-      if (cachedProducts) {
-        return res.status(200).json({
-          posts: JSON.parse(cachedProducts),
-        });
-      }
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID required" });
+    }
 
-      const post = await postsService.getProductPosts(productId);
+    let cachedProducts = null;
 
-      if (!post) {
-        return res.json({ message: "No data from DB" });
-      }
+    if (redisClient.isOpen) {
+      cachedProducts = await redisClient.get(`posts_${productId}`);
+    }
 
-      await redisClient.set(`posts_${productId}`, JSON.stringify(post), {
-        EX: 300,
-      });
-
+    if (cachedProducts) {
       return res.status(200).json({
-        posts: post,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
+        posts: JSON.parse(cachedProducts),
       });
     }
+
+    const posts = await postsService.getProductPosts(productId);
+
+    if (!posts.length) {
+      return res.status(200).json({ message: "No data from DB" });
+    }
+
+    if (redisClient.isOpen) {
+      await redisClient.set(`posts_${productId}`, JSON.stringify(posts), {
+        EX: 300,
+      });
+    }
+
+    return res.status(200).json({
+      posts,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
+}
 
   async updatePosts(req, res) {
     try {
