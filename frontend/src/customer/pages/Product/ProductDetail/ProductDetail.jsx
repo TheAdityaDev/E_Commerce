@@ -470,7 +470,7 @@ const ProductDetail = () => {
       const baseUrl =
         window.location.hostname === "localhost"
           ? "http://localhost:5000/api" // Backend port
-          : "https://e-commerce-six-tau.vercel.app"; // Production backend URL
+          : import.meta.env.VITE_API_HOST; // Production backend URL
 
       const ogUrl = `${baseUrl}/products/${product._id}/og`;
 
