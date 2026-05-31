@@ -109,7 +109,7 @@ class Posts {
 
     if (cachedProducts) {
       return res.status(200).json({
-        posts: JSON.parse(cachedProducts),
+        posts: JSON.stringify(cachedProducts),
       });
     }
 

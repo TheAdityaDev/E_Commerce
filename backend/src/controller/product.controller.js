@@ -71,7 +71,6 @@ class sellerProductController {
   async getProductOG(req, res) {
     try {
       const { productId } = req.params;
-      console.log("productID:", productId);
 
       const product = await productService.findProductById(productId);
 
