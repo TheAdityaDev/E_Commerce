@@ -1,32 +1,60 @@
+const redisClient = require("../config/redis.config");
 const dealService = require("../service/deal.service");
 
 class dealController {
   async getAllDeals(req, res) {
-    try {
-      const deal = req.body;
-      const deals = await dealService.getDeals(deal);
-      res.status(200).json(deals);
-    } catch (error) {
-      console.error("Error fetching deals:", error);
-      res.status(500).json({ message: error.message || "Failed to fetch deals" });
-    }
-  }
 
- async createDeal(req, res) {
   try {
-    if (!req.body) {
-      return res.status(400).json({ message: "Body missing" });
+
+    const cachedDeals = await redisClient.get("deals");
+
+    if (cachedDeals) {
+
+      console.log("Cache Hit");
+
+      return res.status(200).json(
+        JSON.parse(cachedDeals)
+      );
     }
 
-    const deal = req.body;
+    const deals = await dealService.getDeals();
 
-    const createdDeal = await dealService.createDeal(deal);
+    await redisClient.set(
+      "deals",
+      JSON.stringify(deals),
+      {
+        EX: 3600,
+      }
+    );
 
-    res.status(201).json(createdDeal);
+    // 4. Send response
+    res.status(200).json(deals);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    res.status(500).json({
+      message: error.message || "Failed to fetch deals",
+    });
+
   }
+
 }
+
+  async createDeal(req, res) {
+    try {
+      if (!req.body) {
+        return res.status(400).json({ message: "Body missing" });
+      }
+
+      const deal = req.body;
+
+      const createdDeal = await dealService.createDeal(deal);
+
+      res.status(201).json(createdDeal);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 
   async updateDeal(req, res) {
     try {
@@ -36,7 +64,9 @@ class dealController {
       res.status(202).json(updateDeal);
     } catch (error) {
       console.error("Error updating deal:", error);
-      res.status(500).json({ message: error.message || "Failed to update deal" });
+      res
+        .status(500)
+        .json({ message: error.message || "Failed to update deal" });
     }
   }
 
@@ -47,7 +77,9 @@ class dealController {
       res.status(202).json(deleteDeal);
     } catch (error) {
       console.error("Error deleting deal:", error);
-      res.status(500).json({ message: error.message || "Failed to delete deal" });
+      res
+        .status(500)
+        .json({ message: error.message || "Failed to delete deal" });
     }
   }
 }

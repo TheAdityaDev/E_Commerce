@@ -26,7 +26,7 @@ const Deal = () => {
   // Log errors for debugging
   useEffect(() => {
     if (error) {
-      console.error("Error fetching deals:", error);
+      throw error;
     }
   }, [error]);
 

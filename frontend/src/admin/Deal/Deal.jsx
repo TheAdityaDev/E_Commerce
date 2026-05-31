@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
-import DealTable from "./DealTable";
-import DealCategoryTable from "./DealCategoryTable";
-import CreateDealForm from "./createDealForm";
+import React, { lazy, useEffect, useState , Suspense } from "react";
 import { Button } from "@mui/material";
 import { useAppDispatch } from "../../Redux Toolkit/store";
 import { getAllDeals } from "../../Redux Toolkit/Features/Admin/dealSlice";
 import secureLocalStorage from "react-secure-storage";
+
+const DealTable = lazy(() => import("./DealTable"));
+const DealCategoryTable = lazy(() => import("./DealCategoryTable"));
+const CreateDealForm = lazy(() => import("./CreateDealForm"));
+
 
 const tabs = ["Deals", "Create Deal"]; //optional Categories
 const Deal = ({categories}) => {
@@ -34,15 +36,19 @@ const Deal = ({categories}) => {
 
       <div className="lg:mt-0 mt-10">
         {activeTab === "Deals" ? (
-          <DealTable />
+          <Suspense fallback={<div className="p-4">Loading deals...</div>}>
+            <DealTable />
+          </Suspense>
         )
         // ) : activeTab === "Categories" ? (
         //   <DealCategoryTable categories={categories} />
         // )
         : (
-          <div className="mt-5 border-t flex flex-col justify-center items-center h-[70vh]">
-            <CreateDealForm />
-          </div>
+          <Suspense fallback={<div className="p-4">Loading form...</div>}>
+            <div className="mt-5 border-t flex flex-col justify-center items-center h-[70vh]">
+              <CreateDealForm />
+            </div>
+          </Suspense>
         )}
       </div>
     </div>

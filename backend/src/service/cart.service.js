@@ -60,69 +60,68 @@ class cartService {
       throw new Error("Cart not found");
     }
 
-    let isPresent = await cartItemModel
-      .findOne({
-        cart: cart._id,
-        product: product._id,
-        size: size,
-      })
+    // ✅ Atomic operation using findOneAndUpdate with upsert to prevent race condition
+    let cartItem = await cartItemModel
+      .findOneAndUpdate(
+        {
+          cart: cart._id,
+          product: product._id,
+          size: size,
+        },
+        {
+          $inc: { quantity: quantity },
+          $set: {
+            sellingPrice: product.sellingPrice,
+            mrpPrice: product.mrpPrice,
+          },
+          $setOnInsert: {
+            userId: user._id,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+        },
+      )
       .populate("product");
 
-    if (!isPresent) {
-      const cartItem = new cartItemModel({
-        product,
-        cart: cart._id,
-        quantity,
-        size,
-        sellingPrice: product.sellingPrice,
-        mrpPrice: product.mrpPrice,
-        userId: user._id,
-      });
-
-      cart.cartItems.push(cartItem);
-      await cartItem.save();
-
-      return cartItem;
-    } else {
-      // Update quantity for existing item
-      isPresent.quantity += quantity;
-      isPresent.sellingPrice = product.sellingPrice;
-      isPresent.mrpPrice = product.mrpPrice;
-      await isPresent.save();
-      return isPresent;
+    // Add to cart.cartItems if it's a new item
+    if (!cart.cartItems.includes(cartItem._id)) {
+      cart.cartItems.push(cartItem._id);
+      await cart.save();
     }
+
+    return cartItem;
   }
 
- async updateCartItem(userId, cartItemId, cartItemData) {
-  const cartItem = await cartItemModel
-  .findById(cartItemId)
-  .populate("product");
+  async updateCartItem(userId, cartItemId, cartItemData) {
+    const cartItem = await cartItemModel
+      .findById(cartItemId)
+      .populate("product");
 
-// ✅ FIRST check
-if (!cartItem) {
-  throw new Error("Cart item not found");
-}
+    // ✅ FIRST check
+    if (!cartItem) {
+      throw new Error("Cart item not found");
+    }
 
-// ✅ SECOND check
-if (!cartItem.product) {
-  throw new Error("Product not found");
-}
+    // ✅ SECOND check
+    if (!cartItem.product) {
+      throw new Error("Product not found");
+    }
 
-  const updates = {
-    quantity: cartItemData.quantity,
-    mrpPrice: cartItem.product.mrpPrice,
-    sellingPrice: cartItem.product.sellingPrice,
-    // size: cartItemData.size, //optional
-  };
+    const updates = {
+      quantity: cartItemData.quantity,
+      mrpPrice: cartItem.product.mrpPrice,
+      sellingPrice: cartItem.product.sellingPrice,
+      // size: cartItemData.size, //optional
+    };
 
-  // ✅ correct update
-  await cartItemModel.updateOne(
-    { _id: cartItemId },
-    { $set: updates }
-  );
+    // ✅ correct update
+    await cartItemModel.updateOne({ _id: cartItemId }, { $set: updates });
 
-  return { ...cartItem.toObject(), ...updates };
-}
+    return { ...cartItem.toObject(), ...updates };
+  }
 }
 
 module.exports = new cartService();

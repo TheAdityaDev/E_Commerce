@@ -13,6 +13,7 @@ export const fetchPosts = createAsyncThunk(
   "/posts/fetchPosts",
   async ({ token, productId, signal, userName }, { rejectWithValue }) => {
     try {
+      console.log("🚀 Fetching posts for:", productId);
       const response = await axiosInstance.get(`/posts?product=${productId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -20,23 +21,26 @@ export const fetchPosts = createAsyncThunk(
         signal,
       });
 
+      console.log("✅ Backend response:", response.data);
       const data = response.data;
 
-      // Ensure user name is present in the response for display
-      if (data.post && Array.isArray(data.post)) {
-        data.post = data.post.map((p) => ({
+      // ✅ Handle posts array correctly
+      if (data.posts && Array.isArray(data.posts)) {
+        data.posts = data.posts.map((p) => ({
           ...p,
           user: p.user || { name: userName || "Unknown User" },
         }));
       }
 
+      console.log("📦 Posts after processing:", data.posts);
       return data;
     } catch (error) {
+      console.error("❌ Error fetching posts:", error);
       if (error.name === "CanceledError") return;
       return rejectWithValue("Failed to fetch posts");
     }
   },
-);
+);;
 
 export const createPost = createAsyncThunk(
   "/posts/createPost",
@@ -147,7 +151,7 @@ const postSlice = createSlice({
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload.post;
+        state.posts = action.payload.posts;
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false;

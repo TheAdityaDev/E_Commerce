@@ -2,9 +2,12 @@ const postModule = require("../model/posts.model");
 const productModel = require("../model/product.model");
 
 class Posts {
-  async getPosts() {
+  async getPosts(productId) {
+    // ✅ Filter by productId if provided
+    const query = productId ? { product: productId } : {};
+    
     const posts = await postModule
-      .find({})
+      .find(query)
       .populate([
         { path: "user", select: "name" },
         { path: "product", select: "title" },

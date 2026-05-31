@@ -28,6 +28,7 @@ const homeCategoryRoutes = require("./routes/homeCategory.routes");
 const dealRoutes = require("./routes/deal.routes");
 const couponRoutes = require("./routes/coupon.routes");
 const aiRoutes = require("./routes/ai.routes");
+const redisClient = require("./config/redis.config");
 
 app.use(helmet());
 

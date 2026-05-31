@@ -17,7 +17,7 @@ import {
 import { styled } from "@mui/material/styles";
 import TableBody from "@mui/material/TableBody";
 import TableCell, { tableCellClasses } from "@mui/material/TableCell";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState , lazy , Suspense } from "react";
 import { Gift } from "lucide-react";
 import {
   DeleteForeverSharp,
@@ -32,7 +32,8 @@ import {
   resetSuccess,
 } from "../../Redux Toolkit/Features/Admin/couponSlice";
 import secureLocalStorage from "react-secure-storage";
-import CouponForm from "./CouponForm";
+const CouponForm = lazy(() => import("./CouponForm"));
+
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -342,6 +343,7 @@ const Coupon = () => {
         fullWidth
       >
         <DialogTitle>Edit Coupon</DialogTitle>
+        <Suspense fallback={<div className="p-4">Loading form...</div>}>
         <DialogContent>
           {selectedCoupon && (
             <CouponForm
@@ -350,6 +352,7 @@ const Coupon = () => {
             />
           )}
         </DialogContent>
+        </Suspense>
       </Dialog>
     </div>
   );

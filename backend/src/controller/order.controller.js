@@ -11,6 +11,7 @@ class orderController {
         couponDiscount = 0,
         couponCode = null,
       } = req.body;
+      
       const user = req.user;
 
       if (!user) throw new Error("User not found");

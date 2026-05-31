@@ -267,8 +267,12 @@ const ProductDetail = () => {
     // optional: store last fetched id
     const lastProductId = fetchPosts.lastProductId;
 
-    if (lastProductId === productId) return;
+    if (lastProductId === productId) {
+      console.log("🔄 Posts already fetched for this product");
+      return;
+    }
 
+    console.log("📡 Fetching posts for productId:", productId);
     fetchPosts.lastProductId = productId;
 
     dispatch(
@@ -285,15 +289,15 @@ const ProductDetail = () => {
   }, [dispatch, productId]);
 
   const { posts } = useAppSelector((store) => store.posts);
+  console.log("📦 Posts from Redux:", posts); // Debug log
 
-  // Filter posts to show only similar/related products
-  const filteredPosts = posts.filter((post) => {
-    return (
-      post?.productId === productId ||
-      post?.product === productId ||
-      post?.product?._id === productId
-    );
-  });
+  // Filter posts - backend already filters by product, but we double-check
+  const filteredPosts = useMemo(() => (posts || []).filter((post) => {
+    // ✅ Backend already filtered, but verify product ID matches
+    return String(post?.product?._id) === String(productId);
+  }), [posts, productId]);
+  
+  console.log("🎬 Filtered posts:", filteredPosts); // Debug log
 
   // Show sizes only for clothing categories (men/women/kids).
   // Category can arrive as route slug, populated object, or plain id string.
@@ -1178,7 +1182,7 @@ const ProductDetail = () => {
                         Load More Experience <Plus size={16} />
                       </motion.button>
                     ) : (
-                      posts.length < 0 && (
+                      posts?.length < 0 && (
                         <motion.button
                           key="show-less"
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -1188,7 +1192,7 @@ const ProductDetail = () => {
                           onClick={() => setVisibleReviews(2)}
                           className="relative px-12 py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px] flex items-center gap-4 shadow-sm z-10"
                         >
-                          Show Less{" "}
+                        Show Less
                           <ChevronDown className="rotate-180" size={16} />
                         </motion.button>
                       )

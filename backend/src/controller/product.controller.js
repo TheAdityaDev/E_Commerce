@@ -1,3 +1,4 @@
+const redisClient = require("../config/redis.config");
 const productService = require("../service/product.service");
 const Yup = require("yup");
 
@@ -70,8 +71,7 @@ class sellerProductController {
   async getProductOG(req, res) {
     try {
       const { productId } = req.params;
-      console.log("productID:",productId);
-      
+      console.log("productID:", productId);
 
       const product = await productService.findProductById(productId);
 
@@ -121,15 +121,22 @@ class sellerProductController {
   async searchProduct(req, res) {
     try {
       // Accept multiple query parameter names: q, search, query, filter
-      const filter = req.query.q || req.query.search || req.query.query || req.query.filter || "";
+      const filter =
+        req.query.q ||
+        req.query.search ||
+        req.query.query ||
+        req.query.filter ||
+        "";
 
       if (!filter || filter.trim() === "") {
-        return res.status(400).json({ 
-          error: "Search query is required. Use ?q=<term> or ?search=<term>" 
+        return res.status(400).json({
+          error: "Search query is required. Use ?q=<term> or ?search=<term>",
         });
       }
 
-      const products = await productService.searchProduct({ filter: filter.trim() });
+      const products = await productService.searchProduct({
+        filter: filter.trim(),
+      });
       return res.status(200).json(products);
     } catch (error) {
       res.status(400).json({ error: error.message });

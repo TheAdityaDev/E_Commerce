@@ -1,24 +1,69 @@
+const redisClient = require("../config/redis.config");
 const postModule = require("../model/posts.model");
 const postsService = require("../service/posts.service");
 
 class Posts {
   async getPosts(req, res) {
-    const post = await postsService.getPosts();
+    try {
+      const productId = req.query.product; // ✅ Get product filter from query
+      const cacheKey = productId ? `posts_${productId}` : "posts";
+      const cachedProducts = await redisClient.get(cacheKey);
 
-    return res.status(200).json({
-      success: true,
-      post,
-    });
+      if (cachedProducts) {
+        return res.status(200).json({
+          posts: JSON.parse(cachedProducts),
+        });
+      }
+
+      const post = await postsService.getPosts(productId);
+
+      if (!post) {
+        return res.json({ message: "No data from DB" });
+      }
+
+      await redisClient.set(cacheKey, JSON.stringify(post), { EX: 300 });
+
+      // ✅ FIXED: Return the posts data
+      return res.status(200).json({
+        posts: post,
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
 
   async getAllPosts(req, res) {
-    const userId = req.user._id;
-    const post = await postsService.getAllUserPosts(userId);
+    try {
+      const userId = req.user._id;
+      const cachedPosts = await redisClient.get("AllUsersPosts");
 
-    return res.status(200).json({
-      success: true,
-      post,
-    });
+      if (cachedPosts) {
+        return res.status(200).json({
+          success: true,
+          posts: JSON.parse(cachedPosts),
+        });
+      }
+
+      const post = await postsService.getAllUserPosts(userId);
+
+      await redisClient.set("AllUsersPosts", JSON.stringify(post), {
+        EX: 300,
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: post,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
 
   async createPost(req, res) {
@@ -78,19 +123,17 @@ class Posts {
     }
   }
 
-  async deletePost(req, res){
+  async deletePost(req, res) {
     try {
       const userId = req.user._id;
       const postId = req.params.postId;
 
       await postsService.deletePost(userId, postId);
       return res.status(200).json({
-        success:true,
-        message:"Post deleted successfully..."
-      })
-    } catch (error) {
-      
-    }
+        success: true,
+        message: "Post deleted successfully...",
+      });
+    } catch (error) {}
   }
 }
 

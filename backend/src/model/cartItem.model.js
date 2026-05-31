@@ -34,6 +34,9 @@ const cartItemSchema = new mongoose.Schema({
     }
 })
 
+// ✅ Unique compound index to prevent duplicate products in cart
+cartItemSchema.index({ cart: 1, product: 1, size: 1 }, { unique: true })
+
 
 const cartItemModel = mongoose.model("cartItem",cartItemSchema)
 
