@@ -92,7 +92,7 @@ class sellerProductController {
         <meta property="og:title" content="${product.title}" />
         <meta property="og:description" content="${product.description}" />
         <meta property="og:image" content="${productImage}" />
-        <meta property="og:url" content="http://localhost:5173/#/product/${productId}" />
+        <meta property="og:url" content="https://rammart.netlify.app/#/product/${productId}" />
         <meta property="og:type" content="product" />
 
         <!-- Twitter Cards -->
@@ -105,7 +105,7 @@ class sellerProductController {
       </head>
 
        <!-- ✅ CSP Safe Redirect -->
-    <meta http-equiv="refresh" content="0; url=http://localhost:5173/product/${productId}" />
+    <meta http-equiv="refresh" content="0; url=https://rammart.netlify.app/product/${productId}" />
       <body>
       </body>
     </html>

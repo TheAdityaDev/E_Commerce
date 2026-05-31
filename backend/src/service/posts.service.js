@@ -31,7 +31,10 @@ async getProductPosts(productId) {
 
   const posts = await postModule
     .find({ product: new mongoose.Types.ObjectId(productId) })
-    .populate({ path: "user", select: "name" })
+    .populate([
+      { path: "user", select: "name" },
+      { path: "product", select: "title" },
+    ])
     .sort({ createdAt: -1 })
     .limit(10)
     .lean();

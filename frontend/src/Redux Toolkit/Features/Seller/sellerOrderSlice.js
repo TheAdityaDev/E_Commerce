@@ -17,7 +17,6 @@ export const fetchSellerOrders = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("seller order", response.data);
 
       return response.data;
     } catch (error) {
@@ -29,7 +28,6 @@ export const fetchSellerOrders = createAsyncThunk(
 export const updateOrderStatus = createAsyncThunk(
   "/orders/updateOrderStatus",
   async ({ token, orderId, orderStatus }, { rejectWithValue }) => {
-    console.log("Updating order status:", { token, orderId, orderStatus });
 
     try {
       const response = await axiosInstance.patch(
@@ -41,7 +39,6 @@ export const updateOrderStatus = createAsyncThunk(
           },
         },
       );
-      console.log("update seller order status", response.data);
 
       return response.data;
     } catch (error) {

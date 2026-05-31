@@ -37,7 +37,34 @@ export const fetchPosts = createAsyncThunk(
       return rejectWithValue("Failed to fetch posts");
     }
   },
-);;
+);
+
+export const fetchProductPosts = createAsyncThunk(
+  "/posts/fetchProductPosts",
+  async ({ productId, signal }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/posts/${productId}`, {
+        signal,
+      });
+
+      const data = response.data;
+
+      // ✅ Handle posts array correctly
+      if (data.posts && Array.isArray(data.posts)) {
+        data.posts = data.posts.map((p) => ({
+          ...p,
+          user: p.user || { name: "Unknown User" },
+        }));
+      }
+
+      return data;
+    } catch (error) {
+      console.error("❌ Error fetching product posts:", error);
+      if (error.name === "CanceledError") return;
+      return rejectWithValue("Failed to fetch posts");
+    }
+  },
+);
 
 export const createPost = createAsyncThunk(
   "/posts/createPost",
@@ -149,6 +176,18 @@ const postSlice = createSlice({
         state.posts = action.payload.posts;
       })
       .addCase(fetchPosts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch posts";
+      })
+      .addCase(fetchProductPosts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProductPosts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.posts = action.payload.posts;
+      })
+      .addCase(fetchProductPosts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch posts";
       })

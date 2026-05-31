@@ -52,7 +52,6 @@ export const sendLoginSignUpOtp = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (error.code === "ERR_CANCELED") {
-        console.log("Request canceled or timed out");
         return rejectWithValue("Request canceled");
       }
 
@@ -118,7 +117,6 @@ export const signup = createAsyncThunk(
     } catch (error) {
       // ❌ handle cancel / timeout cleanly
       if (error.code === "ERR_CANCELED") {
-        console.log("Signup request canceled or timed out");
         return rejectWithValue("Request canceled");
       }
 
@@ -190,7 +188,6 @@ export const signin = createAsyncThunk(
       return { token, role };
     } catch (error) {
       if (error.code === "ERR_CANCELED") {
-        console.log("Signin request canceled or timed out");
         return rejectWithValue("Request canceled");
       }
 
@@ -235,7 +232,6 @@ export const resetPassword = createAsyncThunk(
     } catch (error) {
       // ❌ handle cancel / timeout
       if (error.code === "ERR_CANCELED") {
-        console.log("Reset password request canceled or timed out");
         return rejectWithValue("Request canceled");
       }
 
@@ -270,7 +266,6 @@ export const verifyOTP = createAsyncThunk(
     } catch (error) {
       // ❌ handle cancel / timeout cleanly
       if (error.code === "ERR_CANCELED") {
-        console.log("Verify OTP request canceled or timed out");
         return rejectWithValue("Request canceled");
       }
 

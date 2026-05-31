@@ -114,7 +114,6 @@ export const fetchSellersById = createAsyncThunk(
           sellerId,
         },
       });
-      console.log("seller profile", response.data);
 
       return response.data;
     } catch (error) {
@@ -137,9 +136,6 @@ export const updateSellerAccountStatus = createAsyncThunk(
           },
         },
       );
-
-      
-      console.log("seller update account status ", response.data);
 
       return response.data;
     } catch (error) {

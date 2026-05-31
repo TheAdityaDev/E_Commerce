@@ -22,9 +22,6 @@ export const createDeal = createAsyncThunk(
         timeout: 10000,
       });
 
-      console.log("Slice:", deal);
-      console.log("Created Deal:", response.data);
-
       return response.data;
     } catch (error) {
       if (error.code === "ERR_CANCELED") {
@@ -40,7 +37,6 @@ export const fetchDeals = createAsyncThunk(
   "/deal/fetchDeals",
   async (token, { rejectWithValue, signal }) => {
     try {
-      console.log("Token:", token);
       const response = await axiosInstance.get(`${API_URL}/deals`, {
         headers: { Authorization: `Bearer ${token}` },
         signal,

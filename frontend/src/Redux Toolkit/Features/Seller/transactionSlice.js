@@ -20,7 +20,6 @@ export const fetchTransactionBySeller = createAsyncThunk(
                     }
                 }
             )
-            console.log("seller transaction", response.data);
             
             return response.data
         } catch (error) {

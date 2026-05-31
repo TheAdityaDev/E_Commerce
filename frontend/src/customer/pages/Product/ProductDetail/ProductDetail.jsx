@@ -40,6 +40,7 @@ import secureLocalStorage from "react-secure-storage";
 import {
   createPost,
   fetchPosts,
+  fetchProductPosts,
 } from "../../../../Redux Toolkit/Features/Customer/postsSlice";
 import { useMemo } from "react";
 import { uploadToCloudinary } from "../../../../util/uploadToCloudinary";
@@ -268,20 +269,29 @@ const ProductDetail = () => {
     const lastProductId = fetchPosts.lastProductId;
 
     if (lastProductId === productId) {
-      console.log("🔄 Posts already fetched for this product");
       return;
     }
 
-    console.log("📡 Fetching posts for productId:", productId);
     fetchPosts.lastProductId = productId;
 
-    dispatch(
-      fetchPosts({
-        token,
-        productId,
-        signal: controller.signal,
-      }),
-    );
+    // Call different API based on authentication status
+    if (token) {
+      dispatch(
+        fetchPosts({
+          token,
+          productId,
+          signal: controller.signal,
+        }),
+      );
+    } else {
+      // User is not authenticated - call fetchProductPosts without auth
+      dispatch(
+        fetchProductPosts({
+          productId,
+          signal: controller.signal,
+        }),
+      );
+    }
 
     return () => {
       controller.abort(); // cancel previous request
@@ -289,15 +299,17 @@ const ProductDetail = () => {
   }, [dispatch, productId]);
 
   const { posts } = useAppSelector((store) => store.posts);
-  console.log("📦 Posts from Redux:", posts); // Debug log
 
-  // Filter posts - backend already filters by product, but we double-check
+  // Filter posts - handle both string IDs and populated objects
   const filteredPosts = useMemo(() => (posts || []).filter((post) => {
-    // ✅ Backend already filtered, but verify product ID matches
-    return String(post?.product?._id) === String(productId);
+    // Handle both cases: product as string ID or as populated object with _id
+    const postProductId = typeof post?.product === "string" 
+      ? post.product 
+      : post?.product?._id;
+    
+    return String(postProductId) === String(productId);
   }), [posts, productId]);
   
-  console.log("🎬 Filtered posts:", filteredPosts); // Debug log
 
   // Show sizes only for clothing categories (men/women/kids).
   // Category can arrive as route slug, populated object, or plain id string.
@@ -458,7 +470,7 @@ const ProductDetail = () => {
       const baseUrl =
         window.location.hostname === "localhost"
           ? "http://localhost:5000/api" // Backend port
-          : "https://your-api-domain.com"; // Production backend URL
+          : "https://e-commerce-six-tau.vercel.app/"; // Production backend URL
 
       const ogUrl = `${baseUrl}/products/${product._id}/og`;
 
@@ -839,7 +851,9 @@ const ProductDetail = () => {
                   className={`p-5 rounded-3xl border-2 transition-all ${isFavorite ? "bg-red-50 border-red-500 text-red-500" : "bg-white border-slate-100 text-slate-300"}`}
                 >
                   <Heart
-                    className={`w-6 h-6 ${isFavorite ? "fill-red-500" : ""}`}
+                    className={`w-6 h-6 ${isFavorite ? "fill-red-500" : ""} ${
+                      token ? "hover:text-red-500" : "cursor-not-allowed text-slate-300"
+                    }`}
                   />
                 </motion.button>
               </div>

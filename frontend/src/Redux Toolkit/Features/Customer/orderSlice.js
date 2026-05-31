@@ -119,7 +119,6 @@ export const paymentSuccess = createAsyncThunk(
         timeout: 10000,
       });
 
-      console.log("fetch order by payment", response.data);
       return response.data;
     } catch (error) {
       if (error.code === "ERR_CANCELED") return rejectWithValue("Request canceled");
@@ -142,9 +141,7 @@ export const cancelOrder = createAsyncThunk(
           timeout: 10000,
         }
       );
-
-      console.log("OrderID:", orderId);
-      console.log("cancel order by id", response.data);
+      
       toast.success(response.data.message);
 
       return response.data;

@@ -124,9 +124,6 @@ export const deleteCartItem = createAsyncThunk(
         }
       );
 
-      console.log("cartItemId:", cartItemId);
-      console.log("delete item cart", response.data);
-
       return response.data;
     } catch (error) {
       if (error.code === "ERR_CANCELED") {
