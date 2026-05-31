@@ -13,6 +13,14 @@ router.get(
 );
 
 router.get(
+  "/:productId",
+  rateLimitRoute,
+  abortSignal(3000),
+  postsController.getProductPosts,
+);
+
+
+router.get(
   "/all",
   rateLimitRoute,
   abortSignal(3000),

@@ -19,6 +19,21 @@ class Posts {
     return posts;
   }
 
+  async getProductPosts(productId) {
+    if (!productId) {
+      throw new Error("Product ID is required");
+    }
+    const posts = await postModule
+      .find({ product: productId })
+      .populate([ 
+        { path: "user", select: "name" },
+      ]).sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    return posts;
+  };
+
   async getAllUserPosts(userId) {
     const posts = await postModule
       .find({ user: userId })

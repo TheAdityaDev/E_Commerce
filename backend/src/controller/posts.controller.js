@@ -27,7 +27,6 @@ class Posts {
       return res.status(200).json({
         posts: post,
       });
-
     } catch (error) {
       return res.status(500).json({
         success: false,
@@ -90,6 +89,38 @@ class Posts {
       return res.status(500).json({
         success: false,
         message: err.message,
+      });
+    }
+  }
+
+  async getProductPosts(req, res) {
+    try {
+      const productId = req.params.productId;
+      const cachedProducts = await redisClient.get(`posts_${productId}`);
+
+      if (cachedProducts) {
+        return res.status(200).json({
+          posts: JSON.parse(cachedProducts),
+        });
+      }
+
+      const post = await postsService.getProductPosts(productId);
+
+      if (!post) {
+        return res.json({ message: "No data from DB" });
+      }
+
+      await redisClient.set(`posts_${productId}`, JSON.stringify(post), {
+        EX: 300,
+      });
+
+      return res.status(200).json({
+        posts: post,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
       });
     }
   }
