@@ -10,8 +10,12 @@ class Posts {
       const cachedProducts = await redisClient.get(cacheKey);
 
       if (cachedProducts) {
+        // Ensure cachedProducts is a string before parsing
+        const parsedPosts = typeof cachedProducts === "string" 
+          ? JSON.parse(cachedProducts) 
+          : cachedProducts;
         return res.status(200).json({
-          posts: JSON.parse(cachedProducts),
+          posts: parsedPosts,
         });
       }
 
@@ -21,9 +25,10 @@ class Posts {
         return res.json({ message: "No data from DB" });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(post), { EX: 300 });
+      // Ensure post is serializable
+      const plainPost = JSON.parse(JSON.stringify(post));
+      await redisClient.set(cacheKey, JSON.stringify(plainPost), { EX: 300 });
 
-      // ✅ FIXED: Return the posts data
       return res.status(200).json({
         posts: post,
       });
@@ -41,15 +46,21 @@ class Posts {
       const cachedPosts = await redisClient.get("AllUsersPosts");
 
       if (cachedPosts) {
+        // Ensure cachedPosts is a string before parsing
+        const parsedPosts = typeof cachedPosts === "string" 
+          ? JSON.parse(cachedPosts) 
+          : cachedPosts;
         return res.status(200).json({
           success: true,
-          posts: JSON.parse(cachedPosts),
+          posts: parsedPosts,
         });
       }
 
       const post = await postsService.getAllUserPosts(userId);
 
-      await redisClient.set("AllUsersPosts", JSON.stringify(post), {
+      // Ensure post is serializable
+      const plainPost = JSON.parse(JSON.stringify(post));
+      await redisClient.set("AllUsersPosts", JSON.stringify(plainPost), {
         EX: 300,
       });
 
@@ -93,36 +104,78 @@ class Posts {
     }
   }
 
+  // async getProductPosts(req, res) {
+  //   try {
+  //     const productId = req.params.productId || req.query.product;
+
+  //     if (!productId) {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Product ID required",
+  //       });
+  //     }
+
+  //     const cacheKey = `posts_${productId}`;
+
+  //     // ---------- CACHE GET ----------
+  //     let cached = null;
+
+  //     try {
+  //       const raw = await redisClient.get(cacheKey);
+
+  //       if (raw) {
+  //         cached = JSON.parse(raw); // SAFE now after clearing old cache
+  //       }
+  //     } catch (e) {
+  //       console.log("Cache read error:", e.message);
+  //     }
+
+  //     if (cached) {
+  //       return res.json({
+  //         success: true,
+  //         source: "cache",
+  //         posts: cached,
+  //       });
+  //     }
+
+  //     // ---------- DB ----------
+  //     const posts = await postsService.getProductPosts(productId);
+
+  //     // ---------- CACHE SET ----------
+  //     await redisClient.set(
+  //       cacheKey,
+  //       JSON.stringify(posts),
+  //       { EX: 300 }
+  //     );
+
+  //     return res.json({
+  //       success: true,
+  //       source: "db",
+  //       posts,
+  //     });
+
+  //   } catch (error) {
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: error.message,
+  //     });
+  //   }
+  // }
+
   async getProductPosts(req, res) {
     try {
-      const productId = req.params.productId || req.query.product;
+      const productId = req.params.productId;
+   
 
-      if (!productId) {
-        return res.status(400).json({ message: "Product ID required" });
+      const post = await postsService.getProductPosts(productId);
+
+      if (!post) {
+        return res.json({ message: "No data from DB" });
       }
 
-      let cachedProducts = null;
-
-      try {
-        const rawCache = await redisClient.get(`posts_${productId}`);
-        if (rawCache && typeof rawCache === "string") {
-          cachedProducts = JSON.parse(rawCache);
-        }
-      } catch (e) { console.error("Redis parse error:", e); }
-
-      if (cachedProducts) {
-        return res.status(200).json({
-          posts: cachedProducts,
-        });
-      }
-
-      const posts = await postsService.getProductPosts(productId);
-
-      await redisClient.set(`posts_${productId}`, JSON.stringify(posts), {
-        EX: 300,
+      return res.status(200).json({
+        posts: post,
       });
-
-      return res.status(200).json({ posts });
     } catch (error) {
       return res.status(500).json({
         success: false,

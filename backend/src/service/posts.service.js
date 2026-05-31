@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const postModule = require("../model/posts.model");
 const productModel = require("../model/product.model");
 
@@ -19,20 +20,24 @@ class Posts {
     return posts;
   }
 
-  async getProductPosts(productId) {
-    if (!productId) {
-      throw new Error("Product ID is required");
-    }
-    const posts = await postModule
-      .find({ product: productId })
-      .populate([ 
-        { path: "user", select: "name" },
-      ]).sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+async getProductPosts(productId) {
+  if (!productId) {
+    throw new Error("Product ID is required");
+  }
 
-    return posts;
-  };
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new Error("Invalid Product ID");
+  }
+
+  const posts = await postModule
+    .find({ product: new mongoose.Types.ObjectId(productId) })
+    .populate({ path: "user", select: "name" })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .lean();
+
+  return posts;
+}
 
   async getAllUserPosts(userId) {
     const posts = await postModule
@@ -69,7 +74,8 @@ class Posts {
         rating: Math.max(1, rating || 1),
       });
 
-      return newPost;
+      // Convert to plain object for proper JSON serialization
+      return JSON.parse(JSON.stringify(newPost));
     } catch (err) {
       throw err;
     }
@@ -79,7 +85,7 @@ class Posts {
       // If productId is not passed in body/params, try to find it from the existing post
       let finalProductId = productId;
       if (!finalProductId) {
-        const existingPost = await postModule.findById(postId);
+        const existingPost = await postModule.findById(postId).lean();
         if (!existingPost) throw new Error("Post not found");
         finalProductId = existingPost.product;
       }
@@ -93,7 +99,7 @@ class Posts {
         { _id: postId, user: userId },
         { $set: { title, content, rating } },
         { returnDocument: "after" },
-      );
+      ).lean();
 
       return updatedPost;
     } catch (error) {
@@ -103,10 +109,12 @@ class Posts {
 
   async deletePost(userId, postId) {
     try {
-      return await postModule.findOneAndDelete({
+      const deletedPost = await postModule.findOneAndDelete({
         _id: postId,
         user: userId,
       });
+      // Convert to plain object for proper JSON serialization
+      return JSON.parse(JSON.stringify(deletedPost));
     } catch (error) {
       throw new Error(error.message);
     }
