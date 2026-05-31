@@ -5,7 +5,7 @@ import axios from "axios";
 const BASE_URL =
   window.location.hostname === "localhost"
     ? import.meta.env.VITE_API_LOCAL
-    : import.meta.env.VITE_API_IP;
+    : import.meta.env.VITE_API_HOST;
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
